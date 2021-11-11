@@ -9,4 +9,4 @@ This project allows you to replay vkCmdTraceRaysKHR calls using memory/data dump
 
 ### Build and Run with the following
     make
-    ./vulkan_rt_runnerd
+    ./vulkan_rt_runner
