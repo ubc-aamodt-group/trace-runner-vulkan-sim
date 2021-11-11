@@ -106,8 +106,6 @@ int main ()
 {
     char *mesa_root = getenv("MESA_ROOT");
     const char *filePath = "gpgpusimShaders/";
-    //const char *descExtension = ".vkdescrptorsetdata";
-    //const char *ptxExtension = ".ptx";
 
     char fullPath[200];
     snprintf(fullPath, sizeof(fullPath), "%s%s", mesa_root, filePath);
@@ -199,4 +197,6 @@ int main ()
 
     // Free the descriptor sets
 
+
+    // TODO: Figure out how to dump data separately for each kernel call
 }
