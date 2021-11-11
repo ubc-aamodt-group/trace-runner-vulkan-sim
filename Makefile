@@ -9,7 +9,7 @@
 CC = g++
 
 # define any compile-time flags
-CFLAGS = -Wall -g -std=c++17 -Wl,--unresolved-symbols=ignore-in-shared-libs
+CFLAGS = -Wall -g3 -std=c++17 -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 # define any directories containing header files other than /usr/include
 #
@@ -60,7 +60,7 @@ $(MAIN): $(OBJS)
 # it uses automatic variables $<: the name of the prerequisite of
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
 # (see the gnu make manual section about automatic variables)
-.c.o:
+.cpp.o:
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
