@@ -183,20 +183,114 @@ int main ()
         }
     }
 
-    // Invoke vkCmdTraceRays
-    // gpgpusim_vkCmdTraceRaysKHR(
-    //                   void *raygen_sbt,
-    //                   void *miss_sbt,
-    //                   void *hit_sbt,
-    //                   void *callable_sbt,
-    //                   bool is_indirect,
-    //                   uint32_t launch_width,
-    //                   uint32_t launch_height,
-    //                   uint32_t launch_depth,
-    //                   uint64_t launch_size_addr);
+    // Load in Shader Binding Tables
+    void *raygen_sbt;
+    void *miss_sbt;
+    void *hit_sbt;
+    void *callable_sbt;
+
+    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    {
+        if (p.path().extension() == ".raygensbt")
+        {
+            std::cout  << "Loading raygen sbt: " << p.path().string() << '\n';
+            char sbtFilePath[200];
+            strcpy(sbtFilePath, p.path().string().c_str());
+
+            int sbt_size = 32; // Capped at 32 bytes, dunno if correct
+            raygen_sbt = malloc(sbt_size); 
+            FILE *fp;
+            fp = fopen(sbtFilePath, "r");
+            fread(raygen_sbt, sbt_size, 1, fp);
+            fclose(fp);
+        } 
+        else if (p.path().extension() == ".misssbt")
+        {
+            std::cout  << "Loading miss sbt: " << p.path().string() << '\n';
+            char sbtFilePath[200];
+            strcpy(sbtFilePath, p.path().string().c_str());
+
+            int sbt_size = 32; // Capped at 32 bytes, dunno if correct
+            miss_sbt = malloc(sbt_size); 
+            FILE *fp;
+            fp = fopen(sbtFilePath, "r");
+            fread(miss_sbt, sbt_size, 1, fp);
+            fclose(fp);
+        }
+        else if (p.path().extension() == ".hitsbt")
+        {
+            std::cout  << "Loading hit sbt: " << p.path().string() << '\n';
+            char sbtFilePath[200];
+            strcpy(sbtFilePath, p.path().string().c_str());
+
+            int sbt_size = 32; // Capped at 32 bytes, dunno if correct
+            hit_sbt = malloc(sbt_size); 
+            FILE *fp;
+            fp = fopen(sbtFilePath, "r");
+            fread(hit_sbt, sbt_size, 1, fp);
+            fclose(fp);
+        }
+        else if (p.path().extension() == ".callablesbt")
+        {
+            std::cout  << "Loading callable sbt: " << p.path().string() << '\n';
+            char sbtFilePath[200];
+            strcpy(sbtFilePath, p.path().string().c_str());
+
+            int sbt_size = 32; // Capped at 32 bytes, dunno if correct
+            callable_sbt = malloc(sbt_size); 
+            FILE *fp;
+            fp = fopen(sbtFilePath, "r");
+            fread(callable_sbt, sbt_size, 1, fp);
+            fclose(fp);
+        }
+    }
+
+    // Parse vkCmdTraceRaysKHR call parameters
+    bool is_indirect;
+    uint32_t launch_width;
+    uint32_t launch_height;
+    uint32_t launch_depth;
+    uint64_t launch_size_addr;
+
+    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    {
+        if (p.path().extension() == ".callparams")
+        {
+            std::cout  << "Loading vkCmdTraceRaysKHR call parameters: " << p.path().string() << '\n';
+            char callparamsFilePath[200];
+            strcpy(callparamsFilePath, p.path().string().c_str());
+
+            FILE *fp;
+            fp = fopen(callparamsFilePath, "r");
+            
+            char* line = NULL;
+            size_t len = 0;
+            getline(&line, &len, fp); // only 1 line in the callparams file
+            //printf("%s\n", line);
+            
+            std::string line_string(line);
+            std::vector<std::string> params = split(line_string, ',');
+
+            is_indirect = (bool) std::stoi(params[0]);
+            launch_width = (uint32_t) std::stoi(params[1]);
+            launch_height = (uint32_t) std::stoi(params[2]);
+            launch_depth = (uint32_t) std::stoi(params[3]);
+            launch_size_addr = (uint64_t) std::stoi(params[4]);
+        }
+    }
+
+    // Invoke vkCmdTraceRaysKHR
+    gpgpusim_vkCmdTraceRaysKHR_cpp(raygen_sbt,
+                                   miss_sbt,
+                                   hit_sbt,
+                                   callable_sbt,
+                                   is_indirect,
+                                   launch_width,
+                                   launch_height,
+                                   launch_depth,
+                                   launch_size_addr);
 
     // Free the descriptor sets
-
 
     // TODO: Figure out how to dump data separately for each kernel call
 }
