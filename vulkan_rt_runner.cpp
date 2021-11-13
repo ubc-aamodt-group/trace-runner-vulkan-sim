@@ -275,6 +275,7 @@ int main ()
             size_t len = 0;
             getline(&line, &len, fp); // only 1 line in the callparams file
             //printf("%s\n", line);
+            fclose(fp);
             
             std::string line_string(line);
             std::vector<std::string> params = split(line_string, ',');
