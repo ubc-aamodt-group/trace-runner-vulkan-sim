@@ -1,7 +1,41 @@
 This project allows you to replay vkCmdTraceRaysKHR calls using memory/data dumps from Vulkan-Sim's mesa without actually invoking mesa itself. This will assume you already have gpgpu-sim_emerald and mesa set up already.
 
 ### Requirements
+Install the required packages
+
     sudo apt-get install libboost-all-dev
+
+Make a folder to contain the simulator
+
+    mkdir vulkan-sim/
+
+Clone and Build gpgpusim_emerald in vulkan-sim/
+
+    git clone git@github.com:ubc-aamodt-group/gpgpu-sim_emerald.git
+    cd gpgpu-sim_emerald
+    git checkout anv_timing_model
+    source setup_environment debug
+    make -j
+
+Clone and Build mesa in vulkan-sim/
+
+    git clone git@github.com:ubc-aamodt-group/mesa.git
+    cd mesa
+    git checkout gpgpusim_anv
+
+In the mesa repo, edit src/intel/vulkan/meson.build so **gpgpusim_lib_dir**, **embree_header_dir**, and **embree_lib_dir** matches the path on your system.
+Afterwards, run the following to build:
+
+    meson --prefix="${PWD}/lib" build/
+    meson configure build/ -Dbuildtype=debug -D b_lundef=false
+
+Clone and build this repo, vulkan_rt_trace_runner
+
+    git clone git@github.com:ubc-aamodt-group/vulkan_rt_trace_runner.git
+    cd vulkan_rt_trace_runner
+    make
+
+    
 
 ### Instructions
 1. In **Makefile**, change **GPGPUSIM_PATH** to the path of your gpgpusim libcudart.so
