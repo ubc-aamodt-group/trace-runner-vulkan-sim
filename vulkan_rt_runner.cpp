@@ -17,16 +17,6 @@
 namespace fs = boost::filesystem;
 
 
-off_t fsize(const char *filename) {
-    struct stat st; 
-
-    if (stat(filename, &st) == 0)
-        return st.st_size;
-
-    return -1; 
-}
-
-
 std::vector<std::string> split (const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss (s);
@@ -148,11 +138,13 @@ int main ()
     }
 
     // Allocate memory for descriptor sets (uniform buffers and acceleration structure)
+    // am i only getting the top level and missing the bottom level? Do i need to rebuild the tree in the launcher?
+    // I think the old addresses from mesa embedded inside is causing the segfault
     for (auto &p : fs::recursive_directory_iterator(fullPathString))
     {
         if (p.path().extension() == ".vkdescrptorsetdata")
         {
-            std::cout  << "Loading descriptor set data: " << p.path().string() << '\n';
+            std::cout << "Loading descriptor set data: " << p.path().string() << '\n';
             char descriptorFilePath[200];
             strcpy(descriptorFilePath, p.path().string().c_str());
             
@@ -172,14 +164,30 @@ int main ()
             uint32_t size = std::stoi(chunks[2]);
             VkDescriptorType type = intToVkDescriptorType(std::stoi(chunks[3]));
 
-            address = malloc(size); // If something breaks, its definitely here
+            uint32_t desired_range;
+            if (type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR || type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV)
+            {
+                desired_range = std::stoi(chunks[4]);
+                address = malloc(size + 2*desired_range); // If something breaks, its definitely here
 
-            FILE *fp;
-            fp = fopen(descriptorFilePath, "r");
-            fread(address, size, 1, fp);
-            fclose(fp);
+                FILE *fp;
+                fp = fopen(descriptorFilePath, "r");
+                fread(address, size + 2*desired_range, 1, fp);
+                fclose(fp);
 
-            gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
+                gpgpusim_setDescriptorSet_cpp(setID, descID, address + (uint64_t)desired_range, size, type);
+            }
+            else 
+            {
+                address = malloc(size); // If something breaks, its definitely here
+
+                FILE *fp;
+                fp = fopen(descriptorFilePath, "r");
+                fread(address, size, 1, fp);
+                fclose(fp);
+
+                gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
+            }
         }
     }
 
