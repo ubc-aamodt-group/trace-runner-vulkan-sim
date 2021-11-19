@@ -168,14 +168,25 @@ int main ()
             if (type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR || type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV)
             {
                 desired_range = std::stoi(chunks[4]);
-                address = malloc(size + 2*desired_range); // If something breaks, its definitely here
+                address = malloc(size + desired_range); // If something breaks, its definitely here
 
                 FILE *fp;
                 fp = fopen(descriptorFilePath, "r");
-                fread(address, size + 2*desired_range, 1, fp);
+                fread(address, size + desired_range, 1, fp);
                 fclose(fp);
 
                 gpgpusim_setDescriptorSet_cpp(setID, descID, address + (uint64_t)desired_range, size, type);
+            }
+            else if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+            {
+                address = malloc(size+ 1920*1080*sizeof(long long)); // If something breaks, its definitely here
+
+                FILE *fp;
+                fp = fopen(descriptorFilePath, "r");
+                fread(address, size, 1, fp);
+                fclose(fp);
+
+                gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
             }
             else 
             {
