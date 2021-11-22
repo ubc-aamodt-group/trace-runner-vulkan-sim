@@ -92,10 +92,19 @@ VkDescriptorType intToVkDescriptorType (int typeInInt)
 }
 
 
-int main ()
+int main(int argc, char* argv[])
 {
+    char *filePath;
     char *mesa_root = getenv("MESA_ROOT");
-    const char *filePath = "gpgpusimShaders/";
+    
+    // Read command line input for shader location
+    if (argc > 1) {
+        filePath = argv[1];
+    }
+    // Otherwise set to default
+    else {
+        filePath = "gpgpusimShaders/";
+    }
 
     char fullPath[200];
     snprintf(fullPath, sizeof(fullPath), "%s%s", mesa_root, filePath);
