@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <algorithm>
 //#include "vulkan/vulkan_core.h"
 #include "../mesa/include/vulkan/vulkan_core.h"
 // #include "vulkan/gpgpusim_calls_from_mesa.h"
@@ -19,7 +20,6 @@
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED 
 #include <boost/filesystem.hpp>
-
 
 // externs from gpgpusim_calls_from_mesa.h
 //extern void gpgpusim_addTreelets_cpp(VkAccelerationStructureKHR accelerationStructure);
