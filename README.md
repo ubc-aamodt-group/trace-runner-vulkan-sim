@@ -9,6 +9,18 @@ Make a folder to contain the simulator
 
     mkdir vulkan-sim/
 
+Clone and Build mesa in vulkan-sim/
+
+    git clone git@github.com:ubc-aamodt-group/mesa.git
+    cd mesa
+    git checkout shadow_trace_runner
+
+In the mesa repo, edit src/intel/vulkan/meson.build so **gpgpusim_lib_dir**, **embree_header_dir**, and **embree_lib_dir** matches the path on your system.
+Afterwards, run the following to build:
+
+    meson --prefix="${PWD}/lib" build/
+    meson configure build/ -Dbuildtype=debug -D b_lundef=false
+
 Clone and Build gpgpusim_emerald in vulkan-sim/
 
     git clone git@github.com:ubc-aamodt-group/gpgpu-sim_emerald.git
@@ -24,22 +36,6 @@ Clone and build this repo, vulkan_rt_trace_runner
     make
 
 
-### Setting Up Mesa For Dumping Traces (Not needed to use the trace runner)
-Clone and Build mesa in vulkan-sim/ (Only needed to generate a trace for the trace runner)
-
-    git clone git@github.com:ubc-aamodt-group/mesa.git
-    cd mesa
-    git checkout shadow_trace_runner
-
-In the mesa repo, edit src/intel/vulkan/meson.build so **gpgpusim_lib_dir**, **embree_header_dir**, and **embree_lib_dir** matches the path on your system.
-Afterwards, run the following to build:
-
-    meson --prefix="${PWD}/lib" build/
-    meson configure build/ -Dbuildtype=debug -D b_lundef=false
-
-
-
-    
 
 ### Instructions
 Two workloads are provided with the trace runner: raytracing_basic and ray_tracing_reflection
