@@ -1,0 +1,89 @@
+.version 2.0
+.target sm_10, map_f64_to_f32
+
+// shader: MESA_SHADER_MISS
+// inputs: 0
+// outputs: 0
+// uniforms: 0
+// shared: 0
+// decl_function main (0 params)
+.entry MESA_SHADER_MISS_func1_main () {
+	.reg .b64 %prd;
+	rt_alloc_mem %prd, 52, 4096; // decl_var shader_call_data INTERP_MODE_NONE hitPayload prd
+
+
+	.reg .f32 %temp_f32;
+	.reg .pred %temp_pred;
+	.reg .f32 %const1_f32;
+	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .u32 %const0_u32;
+	mov.u32 %const0_u32, 0;
+
+	.reg .u16 %const1_u16;
+	mov.u16 %const1_u16, 1;
+
+	// start_block block_0:
+	// preds: 
+	.reg .f32 %ssa_0;
+	mov.f32 %ssa_0, 0F00000001; // vec1 32 ssa_0 = load_const (0x00000001 /* 0.000000 */)
+	.reg .b32 %ssa_0_bits;
+	mov.f32 %ssa_0_bits, 0F00000001;
+
+	.reg .f32 %ssa_1;
+	mov.f32 %ssa_1, 0F3e99999a; // vec1 32 ssa_1 = load_const (0x3e99999a /* 0.300000 */)
+	.reg .b32 %ssa_1_bits;
+	mov.f32 %ssa_1_bits, 0F3e99999a;
+
+	.reg .b64 %ssa_2;
+	mov.b64 %ssa_2, %prd; // vec1 32 ssa_2 = deref_var &prd (shader_call_data hitPayload) 
+
+	.reg .b64 %ssa_3;
+	add.u64 %ssa_3, %ssa_2, 12; // vec1 32 ssa_3 = deref_struct &ssa_2->field1 (shader_call_data vec3) /* &prd.field1 */
+
+	.reg .f32 %ssa_4_0;
+	.reg .f32 %ssa_4_1;
+	.reg .f32 %ssa_4_2;
+	.reg .f32 %ssa_4_3;
+	ld.global.f32 %ssa_4_0, [%ssa_3 + 0];
+	ld.global.f32 %ssa_4_1, [%ssa_3 + 4];
+	ld.global.f32 %ssa_4_2, [%ssa_3 + 8];
+// vec3 32 ssa_4 = intrinsic load_deref (%ssa_3) (0) /* access=0 */
+
+
+	.reg .f32 %ssa_5;
+	mul.f32 %ssa_5, %ssa_1, %ssa_4_0; // vec1 32 ssa_5 = fmul ssa_1, ssa_4.x
+
+	.reg .f32 %ssa_6;
+	mul.f32 %ssa_6, %ssa_1, %ssa_4_1; // vec1 32 ssa_6 = fmul ssa_1, ssa_4.y
+
+	.reg .f32 %ssa_7;
+	mul.f32 %ssa_7, %ssa_1, %ssa_4_2; // vec1 32 ssa_7 = fmul ssa_1, ssa_4.z
+
+	.reg .f32 %ssa_8_0;
+	.reg .f32 %ssa_8_1;
+	.reg .f32 %ssa_8_2;
+	.reg .f32 %ssa_8_3;
+	mov.f32 %ssa_8_0, %ssa_5;
+	mov.f32 %ssa_8_1, %ssa_6;
+	mov.f32 %ssa_8_2, %ssa_7; // vec3 32 ssa_8 = vec3 ssa_5, ssa_6, ssa_7
+
+	.reg .b64 %ssa_9;
+	add.u64 %ssa_9, %ssa_2, 0; // vec1 32 ssa_9 = deref_struct &ssa_2->field0 (shader_call_data vec3) /* &prd.field0 */
+
+	st.global.f32 [%ssa_9 + 0], %ssa_8_0;
+	st.global.f32 [%ssa_9 + 4], %ssa_8_1;
+	st.global.f32 [%ssa_9 + 8], %ssa_8_2;
+// intrinsic store_deref (%ssa_9, %ssa_8) (7, 0) /* wrmask=xyz */ /* access=0 */
+
+
+	.reg .b64 %ssa_10;
+	add.u64 %ssa_10, %ssa_2, 24; // vec1 32 ssa_10 = deref_struct &ssa_2->field2 (shader_call_data int) /* &prd.field2 */
+
+	st.global.f32 [%ssa_10], %ssa_0; // intrinsic store_deref (%ssa_10, %ssa_0) (1, 0) /* wrmask=x */ /* access=0 */
+
+	// succs: block_1 
+	// end_block block_0:
+	// block block_1:
+	ret ;
+}
