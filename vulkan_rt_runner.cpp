@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
             // buffer sizes
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.buffer_sizes", fullPath, i);
             fp = fopen(descPath, "r");
-            line = NULL;
+            line = (char *)malloc(32 * sizeof(char));
             len = 0;
             getline(&line, &len, fp);
             fclose(fp);
