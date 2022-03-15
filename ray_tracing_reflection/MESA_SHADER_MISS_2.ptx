@@ -1,0 +1,42 @@
+.version 2.0
+.target sm_10, map_f64_to_f32
+
+// shader: MESA_SHADER_MISS
+// inputs: 0
+// outputs: 0
+// uniforms: 0
+// shared: 0
+// decl_function main (0 params)
+.entry MESA_SHADER_MISS_func2_main () {
+	.reg .b64 %isShadowed;
+	rt_alloc_mem %isShadowed, 4, 4096; // decl_var shader_call_data INTERP_MODE_NONE bool isShadowed
+
+
+	.reg .f32 %temp_f32;
+	.reg .pred %temp_pred;
+	.reg .f32 %const1_f32;
+	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .u32 %const0_u32;
+	mov.u32 %const0_u32, 0;
+
+	.reg .u16 %const1_u16;
+	mov.u16 %const1_u16, 1;
+
+	// start_block block_0:
+	// preds: 
+	.reg .b32 %ssa_0;
+	mov.b32 %ssa_0, 0; // vec1 1 ssa_0 = load_const (false)
+	.reg .b32 %ssa_0_bits;
+	mov.b32 %ssa_0_bits, 0;
+
+	.reg .b64 %ssa_1;
+	mov.b64 %ssa_1, %isShadowed; // vec1 32 ssa_1 = deref_var &isShadowed (shader_call_data bool) 
+
+	st.global.b32 [%ssa_1], %ssa_0; // intrinsic store_deref (%ssa_1, %ssa_0) (1, 0) /* wrmask=x */ /* access=0 */
+
+	// succs: block_1 
+	// end_block block_0:
+	// block block_1:
+	ret ;
+}

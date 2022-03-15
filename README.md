@@ -50,3 +50,4 @@ Two workloads are provided with the trace runner: raytracing_basic and ray_traci
     e.g.
     ./vulkan_rt_runner raytracing_basic/ raytracing_basic
     ./vulkan_rt_runner ray_tracing_reflection_dump/ ray_tracing_reflection
+    ./vulkan_rt_runner raytracing_extended/ raytracing_extended
