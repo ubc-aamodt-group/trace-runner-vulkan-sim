@@ -80,7 +80,7 @@ struct shaderInfo
     }
 };
 
-void* descriptorSets[1][10];
+void* descriptorSets[1][10] = {nullptr};
 
 // ray_tracing_reflection descriptor set data structures
 namespace ray_tracing_reflection
@@ -429,31 +429,40 @@ int main(int argc, char* argv[])
 
             uint32_t desc_size = (uint32_t) std::stoi(params[0]);
             uint32_t VkDescriptorTypeNum = (uint32_t) std::stoi(params[1]);
-            uint32_t backwards_range = (uint32_t) std::stoi(params[2]);
-            uint32_t forward_range = (uint32_t) std::stoi(params[3]);
-            uint32_t second_backwards_range = (uint32_t) std::stoi(params[4]);
-            uint32_t second_forward_range = (uint32_t) std::stoi(params[5]);
-            uint64_t offset = (uint64_t) std::stoi(params[6]);
+            int64_t max_backwards = (int64_t) std::stoi(params[2]); // negative number
+            int64_t min_backwards = (int64_t) std::stoi(params[3]); // negative number
+            int64_t min_forwards = (int64_t) std::stoi(params[4]);
+            int64_t max_forwards = (int64_t) std::stoi(params[5]);
+            int64_t back_buffer_amount = (int64_t) std::stoi(params[6]);
+            int64_t front_buffer_amount = (int64_t) std::stoi(params[7]);
 
-            // Load in first chunk of AS data
+
+            // Load in top level / main chunk of AS data
             void *address;
-            address = malloc(backwards_range + offset + second_forward_range);
+            address = malloc(max_forwards + front_buffer_amount - max_backwards);
 
-            char asfirstFilePath[200];
-            snprintf(asfirstFilePath, sizeof(asfirstFilePath), "%s%d_%d.asfirst", argv[1], setID, descID);
-            fp = fopen(asfirstFilePath, "r");
-            fread(address, desc_size + backwards_range + forward_range, 1, fp);
+            char asMainFilePath[200];
+            snprintf(asMainFilePath, sizeof(asMainFilePath), "%s%d_%d.asmain", argv[1], setID, descID);
+            fp = fopen(asMainFilePath, "r");
+            fread(address - max_backwards, desc_size, 1, fp);
             fclose(fp);
 
-            // Load in second chunk of AS data
-            char assecondFilePath[200];
-            snprintf(assecondFilePath, sizeof(assecondFilePath), "%s%d_%d.assecond", argv[1], setID, descID);
-            fp = fopen(assecondFilePath, "r");
-            fread(address + backwards_range + offset - second_backwards_range, second_backwards_range + second_backwards_range, 1, fp);
+            // Load in back chunk of AS data
+            char asBackFilePath[200];
+            snprintf(asBackFilePath, sizeof(asBackFilePath), "%s%d_%d.asback", argv[1], setID, descID);
+            fp = fopen(asBackFilePath, "r");
+            fread(address, min_backwards - max_backwards + back_buffer_amount, 1, fp);
+            fclose(fp);
+
+            // Load in front chunk of AS data
+            char asFrontFilePath[200];
+            snprintf(asFrontFilePath, sizeof(asFrontFilePath), "%s%d_%d.asfront", argv[1], setID, descID);
+            fp = fopen(asFrontFilePath, "r");
+            fread(address - max_backwards + min_forwards, max_forwards - min_forwards + front_buffer_amount, 1, fp);
             fclose(fp);
             
-            descriptorSets[setID][descID] = address + (uint64_t)backwards_range;
-            gpgpusim_setDescriptorSetFromLauncher_cpp(address + (uint64_t)backwards_range, setID, descID);
+            descriptorSets[setID][descID] = address - max_backwards;
+            gpgpusim_setDescriptorSetFromLauncher_cpp(address - max_backwards, setID, descID);
         }
     }
 
