@@ -419,7 +419,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(asMetadataFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(256 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -486,7 +486,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(storageImageFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -543,7 +543,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(textureMetadataFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -717,7 +717,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(callparamsFilePath, "r");
             
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp); // only 1 line in the callparams file
             //printf("%s\n", line);
