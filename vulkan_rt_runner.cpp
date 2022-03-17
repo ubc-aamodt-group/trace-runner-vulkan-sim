@@ -39,7 +39,30 @@ extern void gpgpusim_vkCmdTraceRaysKHR_cpp(
 // extern void gpgpusim_setDescriptorSet_cpp(uint32_t setID, uint32_t descID, void *address, uint32_t size, VkDescriptorType type);
 //extern void gpgpusim_setDescriptorSet_cpp(void *set);
 extern void gpgpusim_setDescriptorSetFromLauncher_cpp(void *address, uint32_t setID, uint32_t descID);
-
+extern void gpgpusim_setStorageImageFromLauncher_cpp(void *address, 
+                                                    uint32_t setID, 
+                                                    uint32_t descID, 
+                                                    uint32_t width,
+                                                    uint32_t height,
+                                                    VkFormat format,
+                                                    uint32_t VkDescriptorTypeNum,
+                                                    uint32_t n_planes,
+                                                    uint32_t n_samples,
+                                                    VkImageTiling tiling,
+                                                    uint32_t isl_tiling_mode, 
+                                                    uint32_t row_pitch_B);
+extern void gpgpusim_setTextureFromLauncher_cpp(void *address, 
+                                                uint32_t setID, 
+                                                uint32_t descID, 
+                                                uint64_t size,
+                                                uint32_t width,
+                                                uint32_t height,
+                                                VkFormat format,
+                                                uint32_t VkDescriptorTypeNum,
+                                                uint32_t n_planes,
+                                                uint32_t n_samples,
+                                                VkImageTiling tiling,
+                                                uint32_t isl_tiling_mode);
 
 
 namespace fs = boost::filesystem;
@@ -57,10 +80,11 @@ struct shaderInfo
     }
 };
 
-
+void* descriptorSets[1][10] = {nullptr};
 
 // ray_tracing_reflection descriptor set data structures
-namespace ray_tracing_reflection {
+namespace ray_tracing_reflection
+{
     struct ObjMaterial
     {
         glm::vec3 diffuse{0.7f, 0.7f, 0.7f};
@@ -97,7 +121,7 @@ namespace ray_tracing_reflection {
         void *mat_index_buffer;
     };
 
-    void* descriptorSets[1][4];
+    //void* descriptorSets[1][4];
 }
 
 std::vector<std::string> split (const std::string &s, char delim) {
@@ -205,6 +229,8 @@ int main(int argc, char* argv[])
         workload = "ray_tracing_reflection";
     }
 
+    int export_result = setenv("VULKAN_SIM_LAUNCHER_WORKLOAD", workload, 1);
+    assert(export_result == 0);
 
     // Recreate Descriptor Set Data
     if (!strcmp(workload, "ray_tracing_reflection")) {
@@ -287,7 +313,7 @@ int main(int argc, char* argv[])
             obj_models[i] = *model;
         }
 
-        ray_tracing_reflection::descriptorSets[0][3] = (void*) obj_models;
+        descriptorSets[0][3] = (void*) obj_models;
         gpgpusim_setDescriptorSetFromLauncher_cpp((void*) obj_models, 0, 3);
     }
 
@@ -317,34 +343,37 @@ int main(int argc, char* argv[])
             uint32_t size = std::stoi(chunks[2]);
             VkDescriptorType type = intToVkDescriptorType(std::stoi(chunks[3]));
 
-            uint32_t desired_range;
+            uint32_t backwards_range;
+            uint32_t forward_range;
             if (type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR || type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV)
             {
-                desired_range = std::stoi(chunks[4]);
-                assert(size + 2*desired_range != 0);
-                address = malloc(size + 2*desired_range); // If something breaks, its definitely here
+                backwards_range = std::stoi(chunks[4]);
+                forward_range = std::stoi(chunks[5]);
+                assert(size + backwards_range + forward_range != 0);
+                address = malloc(size + backwards_range + forward_range); // If something breaks, its definitely here
 
                 FILE *fp;
                 fp = fopen(descriptorFilePath, "r");
-                fread(address, size + 2*desired_range, 1, fp);
+                fread(address, size + backwards_range + forward_range, 1, fp);
                 fclose(fp);
 
                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address + (uint64_t)desired_range, size, type);
-                ray_tracing_reflection::descriptorSets[setID][descID] = address + (uint64_t)desired_range;
-                gpgpusim_setDescriptorSetFromLauncher_cpp(address + (uint64_t)desired_range, setID, descID);
+                descriptorSets[setID][descID] = address + (uint64_t)backwards_range;
+                gpgpusim_setDescriptorSetFromLauncher_cpp(address + (uint64_t)backwards_range, setID, descID);
             }
             else if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
             {
-                address = malloc(size+ 1920*1080*sizeof(long long)); // If something breaks, its definitely here
+                // This is moved to another section
+                // address = malloc(size+ 1920*1080*sizeof(long long)); // If something breaks, its definitely here
 
-                FILE *fp;
-                fp = fopen(descriptorFilePath, "r");
-                fread(address, size, 1, fp);
-                fclose(fp);
+                // FILE *fp;
+                // fp = fopen(descriptorFilePath, "r");
+                // fread(address, size, 1, fp);
+                // fclose(fp);
 
-                //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
-                ray_tracing_reflection::descriptorSets[setID][descID] = address;
-                gpgpusim_setDescriptorSetFromLauncher_cpp(address, setID, descID);
+                // //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
+                // descriptorSets[setID][descID] = address;
+                // gpgpusim_setDescriptorSetFromLauncher_cpp(address, setID, descID);
             }
             else 
             {
@@ -357,9 +386,204 @@ int main(int argc, char* argv[])
                 fclose(fp);
 
                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
-                ray_tracing_reflection::descriptorSets[setID][descID] = address;
+                descriptorSets[setID][descID] = address;
                 gpgpusim_setDescriptorSetFromLauncher_cpp(address, setID, descID);
             }
+        }
+    }
+
+
+    // Acceleration Structure
+    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    {
+        if (p.path().extension() == ".asmetadata")
+        {
+            std::cout << "Loading AS metadata: " << p.path().string() << '\n';
+            char asMetadataFilePath[200];
+            strcpy(asMetadataFilePath, p.path().string().c_str());
+            
+            // Parse vkdescrptorsetdata File name format: setID_descID_SizeInBytes_VkDescriptorType.vkdescrptorsetdata
+            std::string filename = p.path().filename().string();
+            std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
+            std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
+
+            // for (auto s : chunks)
+            // {
+            //     std::cout << s << std::endl;
+            // }
+
+            uint32_t setID = std::stoi(chunks[0]);
+            uint32_t descID = std::stoi(chunks[1]);
+
+
+            FILE *fp;
+            fp = fopen(asMetadataFilePath, "r");
+
+            char* line = NULL;
+            size_t len = 0;
+            getline(&line, &len, fp);
+            fclose(fp);
+
+            std::string line_string(line);
+            std::vector<std::string> params = split(line_string, ',');
+
+            uint32_t desc_size = (uint32_t) std::stoi(params[0]);
+            uint32_t VkDescriptorTypeNum = (uint32_t) std::stoi(params[1]);
+            int64_t max_backwards = (int64_t) std::stoi(params[2]); // negative number
+            int64_t min_backwards = (int64_t) std::stoi(params[3]); // negative number
+            int64_t min_forwards = (int64_t) std::stoi(params[4]);
+            int64_t max_forwards = (int64_t) std::stoi(params[5]);
+            int64_t back_buffer_amount = (int64_t) std::stoi(params[6]);
+            int64_t front_buffer_amount = (int64_t) std::stoi(params[7]);
+
+
+            // Load in top level / main chunk of AS data
+            void *address;
+            address = malloc(max_forwards + front_buffer_amount - max_backwards);
+
+            char asMainFilePath[200];
+            snprintf(asMainFilePath, sizeof(asMainFilePath), "%s%d_%d.asmain", argv[1], setID, descID);
+            fp = fopen(asMainFilePath, "r");
+            fread(address - max_backwards, desc_size, 1, fp);
+            fclose(fp);
+
+            // Load in back chunk of AS data
+            char asBackFilePath[200];
+            snprintf(asBackFilePath, sizeof(asBackFilePath), "%s%d_%d.asback", argv[1], setID, descID);
+            fp = fopen(asBackFilePath, "r");
+            fread(address, min_backwards - max_backwards + back_buffer_amount, 1, fp);
+            fclose(fp);
+
+            // Load in front chunk of AS data
+            char asFrontFilePath[200];
+            snprintf(asFrontFilePath, sizeof(asFrontFilePath), "%s%d_%d.asfront", argv[1], setID, descID);
+            fp = fopen(asFrontFilePath, "r");
+            fread(address - max_backwards + min_forwards, max_forwards - min_forwards + front_buffer_amount, 1, fp);
+            fclose(fp);
+            
+            descriptorSets[setID][descID] = address - max_backwards;
+            gpgpusim_setDescriptorSetFromLauncher_cpp(address - max_backwards, setID, descID);
+        }
+    }
+
+
+    // Storage Images
+    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    {
+        if (p.path().extension() == ".vkstorageimagemetadata")
+        {
+            std::cout  << "Loading Storage Image metadata: " << p.path().string() << '\n';
+            char storageImageFilePath[200];
+            strcpy(storageImageFilePath, p.path().string().c_str());
+            
+            std::string filename = p.path().filename().string();
+            std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
+            std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
+
+            uint32_t setID = std::stoi(chunks[0]);
+            uint32_t descID = std::stoi(chunks[1]);
+            
+            FILE *fp;
+            fp = fopen(storageImageFilePath, "r");
+
+            char* line = NULL;
+            size_t len = 0;
+            getline(&line, &len, fp);
+            fclose(fp);
+
+            std::string line_string(line);
+            std::vector<std::string> params = split(line_string, ',');
+
+            uint32_t width = (uint32_t) std::stoi(params[0]);
+            uint32_t height = (uint32_t) std::stoi(params[1]);
+            VkFormat format = (uint32_t) std::stoi(params[2]);
+            uint32_t VkDescriptorTypeNum = (uint32_t) std::stoi(params[3]);
+            uint32_t n_planes = (uint32_t) std::stoi(params[4]);
+            uint32_t n_samples = (uint32_t) std::stoi(params[5]);
+            VkImageTiling tiling = (uint32_t) std::stoi(params[6]);
+            uint32_t isl_tiling_mode = (uint32_t) std::stoi(params[7]);
+            uint32_t row_pitch_B = (uint32_t) std::stoi(params[8]);
+
+            void *address;
+            address = malloc(width * height * sizeof(long long));
+
+            descriptorSets[setID][descID] = address; // kinda like a descriptor set
+            gpgpusim_setStorageImageFromLauncher_cpp(address, 
+                                                    setID, 
+                                                    descID, 
+                                                    width, 
+                                                    height, 
+                                                    format, 
+                                                    VkDescriptorTypeNum, 
+                                                    n_planes, 
+                                                    n_samples, 
+                                                    tiling, 
+                                                    isl_tiling_mode, 
+                                                    row_pitch_B);
+        }
+    }
+
+
+    // Texture Data and Metadata
+    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    {
+        if (p.path().extension() == ".vktexturemetadata")
+        {
+            std::cout  << "Loading Texture metadata: " << p.path().string() << '\n';
+            char textureMetadataFilePath[200];
+            strcpy(textureMetadataFilePath, p.path().string().c_str());
+            
+            std::string filename = p.path().filename().string();
+            std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
+            std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
+
+            uint32_t setID = std::stoi(chunks[0]);
+            uint32_t descID = std::stoi(chunks[1]);
+            
+            FILE *fp;
+            fp = fopen(textureMetadataFilePath, "r");
+
+            char* line = NULL;
+            size_t len = 0;
+            getline(&line, &len, fp);
+            fclose(fp);
+
+            std::string line_string(line);
+            std::vector<std::string> params = split(line_string, ',');
+
+            uint64_t size = (uint64_t) std::stoi(params[0]);
+            uint32_t width = (uint32_t) std::stoi(params[1]);
+            uint32_t height = (uint32_t) std::stoi(params[2]);
+            VkFormat format = (uint32_t) std::stoi(params[3]);
+            uint32_t VkDescriptorTypeNum = (uint32_t) std::stoi(params[4]);
+            uint32_t n_planes = (uint32_t) std::stoi(params[5]);
+            uint32_t n_samples = (uint32_t) std::stoi(params[6]);
+            VkImageTiling tiling = (uint32_t) std::stoi(params[7]);
+            uint32_t isl_tiling_mode = (uint32_t) std::stoi(params[8]);
+
+            void *address;
+            address = malloc(size);
+
+
+            // Read in texture data
+            char textureDataFilePath[200];
+            snprintf(textureDataFilePath, sizeof(textureDataFilePath), "%s%d_%d.vktexturedata", argv[1], setID, descID);
+            fp = fopen(textureDataFilePath, "r");
+            fread(address, size, 1, fp);
+            fclose(fp);
+
+            gpgpusim_setTextureFromLauncher_cpp(address, 
+                                                setID, 
+                                                descID, 
+                                                size,
+                                                width, 
+                                                height, 
+                                                format, 
+                                                VkDescriptorTypeNum, 
+                                                n_planes, 
+                                                n_samples, 
+                                                tiling, 
+                                                isl_tiling_mode);
         }
     }
 
