@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <algorithm>
 //#include "vulkan/vulkan_core.h"
 #include "../mesa/include/vulkan/vulkan_core.h"
 // #include "vulkan/gpgpusim_calls_from_mesa.h"
@@ -19,7 +20,6 @@
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED 
 #include <boost/filesystem.hpp>
-
 
 // externs from gpgpusim_calls_from_mesa.h
 //extern void gpgpusim_addTreelets_cpp(VkAccelerationStructureKHR accelerationStructure);
@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
             // buffer sizes
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.buffer_sizes", fullPath, i);
             fp = fopen(descPath, "r");
-            line = NULL;
+            line = (char *)malloc(32 * sizeof(char));
             len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -420,7 +420,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(asMetadataFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(256 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -487,7 +487,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(storageImageFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -544,7 +544,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(textureMetadataFilePath, "r");
 
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp);
             fclose(fp);
@@ -720,7 +720,7 @@ int main(int argc, char* argv[])
             FILE *fp;
             fp = fopen(callparamsFilePath, "r");
             
-            char* line = NULL;
+            char* line = (char *)malloc(64 * sizeof(char));
             size_t len = 0;
             getline(&line, &len, fp); // only 1 line in the callparams file
             //printf("%s\n", line);
