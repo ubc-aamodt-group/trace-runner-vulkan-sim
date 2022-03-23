@@ -63,7 +63,8 @@ extern void gpgpusim_setTextureFromLauncher_cpp(void *address,
                                                 uint32_t n_samples,
                                                 VkImageTiling tiling,
                                                 uint32_t isl_tiling_mode,
-                                                uint32_t row_pitch_B);
+                                                uint32_t row_pitch_B,
+                                                uint32_t filter);
 
 
 namespace fs = boost::filesystem;
@@ -562,6 +563,7 @@ int main(int argc, char* argv[])
             VkImageTiling tiling = (uint32_t) std::stoi(params[7]);
             uint32_t isl_tiling_mode = (uint32_t) std::stoi(params[8]);
             uint32_t row_pitch_B = (uint32_t) std::stoi(params[9]);
+            uint32_t filter = (uint32_t) std::stoi(params[10]);
 
             void *address;
             address = malloc(size);
@@ -586,7 +588,8 @@ int main(int argc, char* argv[])
                                                 n_samples, 
                                                 tiling, 
                                                 isl_tiling_mode,
-                                                row_pitch_B);
+                                                row_pitch_B,
+                                                filter);
         }
     }
 
