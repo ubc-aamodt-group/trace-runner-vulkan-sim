@@ -126,6 +126,44 @@ namespace ray_tracing_reflection
     //void* descriptorSets[1][4];
 }
 
+
+long fseek_filesize(const char *filename)
+{
+    FILE *fp = NULL;
+    long off;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+        printf("failed to fopen %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    if (fseek(fp, 0, SEEK_END) == -1)
+    {
+        printf("failed to fseek %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    off = ftell(fp);
+    if (off == -1)
+    {
+        printf("failed to ftell %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    //printf("[*] fseek_filesize - file: %s, size: %ld\n", filename, off);
+
+    if (fclose(fp) != 0)
+    {
+        printf("failed to fclose %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    return off;
+}
+
+
 std::vector<std::string> split (const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss (s);
@@ -437,6 +475,8 @@ int main(int argc, char* argv[])
             int64_t max_forwards = (int64_t) std::stoi(params[5]);
             int64_t back_buffer_amount = (int64_t) std::stoi(params[6]);
             int64_t front_buffer_amount = (int64_t) std::stoi(params[7]);
+            uint32_t haveBackwards = (uint32_t) std::stoi(params[8]);
+            uint32_t haveForwards = (uint32_t) std::stoi(params[9]);
 
 
             // Load in top level / main chunk of AS data
@@ -450,18 +490,24 @@ int main(int argc, char* argv[])
             fclose(fp);
 
             // Load in back chunk of AS data
-            char asBackFilePath[200];
-            snprintf(asBackFilePath, sizeof(asBackFilePath), "%s%d_%d.asback", argv[1], setID, descID);
-            fp = fopen(asBackFilePath, "r");
-            fread(address, min_backwards - max_backwards + back_buffer_amount, 1, fp);
-            fclose(fp);
+            if (haveBackwards)
+            {
+                char asBackFilePath[200];
+                snprintf(asBackFilePath, sizeof(asBackFilePath), "%s%d_%d.asback", argv[1], setID, descID);
+                fp = fopen(asBackFilePath, "r");
+                fread(address, min_backwards - max_backwards + back_buffer_amount, 1, fp);
+                fclose(fp);
+            }
 
             // Load in front chunk of AS data
-            char asFrontFilePath[200];
-            snprintf(asFrontFilePath, sizeof(asFrontFilePath), "%s%d_%d.asfront", argv[1], setID, descID);
-            fp = fopen(asFrontFilePath, "r");
-            fread(address - max_backwards + min_forwards, max_forwards - min_forwards + front_buffer_amount, 1, fp);
-            fclose(fp);
+            if (haveForwards)
+            {
+                char asFrontFilePath[200];
+                snprintf(asFrontFilePath, sizeof(asFrontFilePath), "%s%d_%d.asfront", argv[1], setID, descID);
+                fp = fopen(asFrontFilePath, "r");
+                fread(address - max_backwards + min_forwards, max_forwards - min_forwards + front_buffer_amount, 1, fp);
+                fclose(fp);
+            }
             
             descriptorSets[setID][descID] = address - max_backwards;
             gpgpusim_setDescriptorSetFromLauncher_cpp(address - max_backwards, setID, descID);
@@ -654,13 +700,14 @@ int main(int argc, char* argv[])
 
     for (auto &p : fs::recursive_directory_iterator(fullPathString))
     {
-        int sbt_size = 64;
+        long sbt_size = 64;
         if (p.path().extension() == ".raygensbt")
         {
             std::cout  << "Loading raygen sbt: " << p.path().string() << '\n';
             char sbtFilePath[200];
             strcpy(sbtFilePath, p.path().string().c_str());
 
+            sbt_size = fseek_filesize(sbtFilePath);
             raygen_sbt = malloc(sbt_size); 
             FILE *fp;
             fp = fopen(sbtFilePath, "r");
@@ -673,6 +720,7 @@ int main(int argc, char* argv[])
             char sbtFilePath[200];
             strcpy(sbtFilePath, p.path().string().c_str());
 
+            sbt_size = fseek_filesize(sbtFilePath);
             miss_sbt = malloc(sbt_size); 
             FILE *fp;
             fp = fopen(sbtFilePath, "r");
@@ -685,6 +733,7 @@ int main(int argc, char* argv[])
             char sbtFilePath[200];
             strcpy(sbtFilePath, p.path().string().c_str());
 
+            sbt_size = fseek_filesize(sbtFilePath);
             hit_sbt = malloc(sbt_size); 
             FILE *fp;
             fp = fopen(sbtFilePath, "r");
@@ -697,6 +746,7 @@ int main(int argc, char* argv[])
             char sbtFilePath[200];
             strcpy(sbtFilePath, p.path().string().c_str());
 
+            sbt_size = fseek_filesize(sbtFilePath);
             callable_sbt = malloc(sbt_size); 
             FILE *fp;
             fp = fopen(sbtFilePath, "r");
