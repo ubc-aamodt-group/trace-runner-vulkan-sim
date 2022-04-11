@@ -70,10 +70,15 @@
 	load_vulkan_descriptor %textures, 0, 7; // decl_var uniform INTERP_MODE_NONE restrict sampler2D[26] textures (~0, 0, 7)
 
 
+	.reg .u64 %temp_u64;
+	.reg .u32 %temp_u32;
 	.reg .f32 %temp_f32;
 	.reg .pred %temp_pred;
 	.reg .f32 %const1_f32;
 	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .f32 %const0_f32;
+	mov.f32 %const0_f32, 0F00000000;
 
 	.reg .u32 %const0_u32;
 	mov.u32 %const0_u32, 0;
@@ -1595,5 +1600,6 @@
 	// succs: block_34 
 	// end_block block_33:
 	// block block_34:
+	shader_exit:
 	ret ;
 }

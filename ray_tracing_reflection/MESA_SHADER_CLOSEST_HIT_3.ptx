@@ -40,10 +40,15 @@
 	rt_alloc_mem %isShadowed, 4, 8; // decl_var  INTERP_MODE_NONE bool isShadowed
 
 
+	.reg .u64 %temp_u64;
+	.reg .u32 %temp_u32;
 	.reg .f32 %temp_f32;
 	.reg .pred %temp_pred;
 	.reg .f32 %const1_f32;
 	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .f32 %const0_f32;
+	mov.f32 %const0_f32, 0F00000000;
 
 	.reg .u32 %const0_u32;
 	mov.u32 %const0_u32, 0;
@@ -729,19 +734,37 @@
 		mov.f32 %ssa_171_1, %ssa_154;
 		mov.f32 %ssa_171_2, %ssa_155; // vec3 32 ssa_171 = vec3 ssa_153, ssa_154, ssa_155
 
-		.reg .u32 %run_closest_hit_0;
-		.reg .u32 %run_miss_0;
-		trace_ray %ssa_170, %ssa_6, %ssa_4, %ssa_3, %ssa_3, %ssa_2, %ssa_171_0, %ssa_171_1, %ssa_171_2, %ssa_8, %ssa_10_0, %ssa_10_1, %ssa_10_2, %ssa_7, %run_closest_hit_0, %run_miss_0; // intrinsic trace_ray (%ssa_170, %ssa_6, %ssa_4, %ssa_3, %ssa_3, %ssa_2, %ssa_171, %ssa_8, %ssa_10, %ssa_7, %ssa_168) ()
+		trace_ray %ssa_170, %ssa_6, %ssa_4, %ssa_3, %ssa_3, %ssa_2, %ssa_171_0, %ssa_171_1, %ssa_171_2, %ssa_8, %ssa_10_0, %ssa_10_1, %ssa_10_2, %ssa_7; // intrinsic trace_ray (%ssa_170, %ssa_6, %ssa_4, %ssa_3, %ssa_3, %ssa_2, %ssa_171, %ssa_8, %ssa_10, %ssa_7, %ssa_168) ()
 
-		.reg .pred %skip_closest_hit_0;
-		setp.eq.u32 %skip_closest_hit_0, %run_closest_hit_0, %const0_u32;
-		@%skip_closest_hit_0 bra skip_closest_hit_label_0;
-		call_closest_hit_shader ;
-		skip_closest_hit_label_0:
+		.reg .u32 %intersection_counter_0;
+		mov.u32 %intersection_counter_0, 0;
+		intersection_loop_0:
+		.reg .pred %intersections_exit_0;
+		intersection_exit.pred %intersections_exit_0, %intersection_counter_0;
+		@%intersections_exit_0 bra exit_intersection_label_0;
+		.reg .pred %run_intersection_0;
+		run_intersection.pred %run_intersection_0, %intersection_counter_0;
+		@!%run_intersection_0 bra skip_intersection_label_0;
+		call_intersection_shader %intersection_counter_0;
+		skip_intersection_label_0:
+		add.u32 %intersection_counter_0, %intersection_counter_0, 1;
+		bra intersection_loop_0;
+		exit_intersection_label_0:
 
-		.reg .pred %skip_miss_0;
-		setp.eq.u32 %skip_miss_0, %run_miss_0, %const0_u32;
-		@%skip_miss_0 bra skip_miss_label_0;
+		.reg .pred %hit_geometry_0;
+		hit_geometry.pred %hit_geometry_0;
+
+		@!%hit_geometry_0 bra exit_closest_hit_label_0;
+		.reg .u32 %closest_hit_shaderID_0;
+		get_closest_hit_shaderID %closest_hit_shaderID_0;
+		.reg .pred %skip_closest_hit_3_0;
+		setp.ne.u32 %skip_closest_hit_3_0, %closest_hit_shaderID_0, 3;
+		@%skip_closest_hit_3_0 bra skip_closest_hit_label_3_0;
+		call_closest_hit_shader 3;
+		skip_closest_hit_label_3_0:
+		exit_closest_hit_label_0:
+
+		@%hit_geometry_0 bra skip_miss_label_0;
 		call_miss_shader ;
 		skip_miss_label_0:
 
@@ -1162,5 +1185,6 @@
 	// succs: block_7 
 	// end_block block_6:
 	// block block_7:
+	shader_exit:
 	ret ;
 }

@@ -9,6 +9,30 @@
 // shared: 0
 // decl_function main (0 params)
 .entry MESA_SHADER_RAYGEN_func0_main () {
+	.reg .u32 %launch_ID_0;
+	.reg .u32 %launch_ID_1;
+	.reg .u32 %launch_ID_2;
+	load_ray_launch_id %launch_ID_0, %launch_ID_1, %launch_ID_2;
+	
+	.reg .u32 %launch_Size_0;
+	.reg .u32 %launch_Size_1;
+	.reg .u32 %launch_Size_2;
+	load_ray_launch_size %launch_Size_0, %launch_Size_1, %launch_Size_2;
+	
+	
+	.reg .pred %bigger_0;
+	setp.ge.u32 %bigger_0, %launch_ID_0, %launch_Size_0;
+	
+	.reg .pred %bigger_1;
+	setp.ge.u32 %bigger_1, %launch_ID_1, %launch_Size_1;
+	
+	.reg .pred %bigger_2;
+	setp.ge.u32 %bigger_2, %launch_ID_2, %launch_Size_2;
+	
+	@%bigger_0 bra shader_exit;
+	@%bigger_1 bra shader_exit;
+	@%bigger_2 bra shader_exit;
+
 		.reg  .b32 %ssa_339;
 
 		.reg  .b32 %ssa_338;
@@ -103,10 +127,15 @@
 	rt_alloc_mem %hitValue, 48, 8; // decl_var  INTERP_MODE_NONE Payload hitValue
 
 
+	.reg .u64 %temp_u64;
+	.reg .u32 %temp_u32;
 	.reg .f32 %temp_f32;
 	.reg .pred %temp_pred;
 	.reg .f32 %const1_f32;
 	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .f32 %const0_f32;
+	mov.f32 %const0_f32, 0F00000000;
 
 	.reg .u32 %const0_u32;
 	mov.u32 %const0_u32, 0;
@@ -117,7 +146,9 @@
 	// start_block block_0:
 	// preds: 
 	.reg .f32 %ssa_0;
-	mov.f32 %ssa_0, 0F000000ff;	// vec1 32 ssa_0 = undefined
+	mov.f32 %ssa_0, 0F000000ff; // vec1 32 ssa_0 = undefined
+	.reg .b32 %ssa_0_bits;
+	mov.f32 %ssa_0_bits, 0F000000ff;
 
 	.reg .f32 %ssa_1;
 	mov.f32 %ssa_1, 0F00000001; // vec1 32 ssa_1 = load_const (0x00000001 /* 0.000000 */)
@@ -636,19 +667,37 @@
 		.reg .b64 %ssa_129;
 	mov.b64 %ssa_129, %hitValue; // vec1 32 ssa_129 = deref_var &hitValue (function_temp Payload) 
 
-		.reg .u32 %run_closest_hit_0;
-		.reg .u32 %run_miss_0;
-		trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127_0, %ssa_127_1, %ssa_127_2, %ssa_17, %ssa_128_0, %ssa_128_1, %ssa_128_2, %ssa_16, %run_closest_hit_0, %run_miss_0; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127, %ssa_17, %ssa_128, %ssa_16, %ssa_129) ()
+		trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127_0, %ssa_127_1, %ssa_127_2, %ssa_17, %ssa_128_0, %ssa_128_1, %ssa_128_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127, %ssa_17, %ssa_128, %ssa_16, %ssa_129) ()
 
-		.reg .pred %skip_closest_hit_0;
-		setp.eq.u32 %skip_closest_hit_0, %run_closest_hit_0, %const0_u32;
-		@%skip_closest_hit_0 bra skip_closest_hit_label_0;
-		call_closest_hit_shader ;
-		skip_closest_hit_label_0:
+		.reg .u32 %intersection_counter_0;
+		mov.u32 %intersection_counter_0, 0;
+		intersection_loop_0:
+		.reg .pred %intersections_exit_0;
+		intersection_exit.pred %intersections_exit_0, %intersection_counter_0;
+		@%intersections_exit_0 bra exit_intersection_label_0;
+		.reg .pred %run_intersection_0;
+		run_intersection.pred %run_intersection_0, %intersection_counter_0;
+		@!%run_intersection_0 bra skip_intersection_label_0;
+		call_intersection_shader %intersection_counter_0;
+		skip_intersection_label_0:
+		add.u32 %intersection_counter_0, %intersection_counter_0, 1;
+		bra intersection_loop_0;
+		exit_intersection_label_0:
 
-		.reg .pred %skip_miss_0;
-		setp.eq.u32 %skip_miss_0, %run_miss_0, %const0_u32;
-		@%skip_miss_0 bra skip_miss_label_0;
+		.reg .pred %hit_geometry_0;
+		hit_geometry.pred %hit_geometry_0;
+
+		@!%hit_geometry_0 bra exit_closest_hit_label_0;
+		.reg .u32 %closest_hit_shaderID_0;
+		get_closest_hit_shaderID %closest_hit_shaderID_0;
+		.reg .pred %skip_closest_hit_2_0;
+		setp.ne.u32 %skip_closest_hit_2_0, %closest_hit_shaderID_0, 2;
+		@%skip_closest_hit_2_0 bra skip_closest_hit_label_2_0;
+		call_closest_hit_shader 2;
+		skip_closest_hit_label_2_0:
+		exit_closest_hit_label_0:
+
+		@%hit_geometry_0 bra skip_miss_label_0;
 		call_miss_shader ;
 		skip_miss_label_0:
 
@@ -767,19 +816,37 @@
 			mov.f32 %ssa_153_1, %ssa_149;
 			mov.f32 %ssa_153_2, %ssa_151; // vec3 32 ssa_153 = vec3 ssa_148, ssa_149, ssa_151
 
-			.reg .u32 %run_closest_hit_1;
-			.reg .u32 %run_miss_1;
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_153_0, %ssa_153_1, %ssa_153_2, %ssa_16, %run_closest_hit_1, %run_miss_1; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_153, %ssa_16, %ssa_129) ()
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_153_0, %ssa_153_1, %ssa_153_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_153, %ssa_16, %ssa_129) ()
 
-			.reg .pred %skip_closest_hit_1;
-			setp.eq.u32 %skip_closest_hit_1, %run_closest_hit_1, %const0_u32;
-			@%skip_closest_hit_1 bra skip_closest_hit_label_1;
-			call_closest_hit_shader ;
-			skip_closest_hit_label_1:
+			.reg .u32 %intersection_counter_1;
+			mov.u32 %intersection_counter_1, 0;
+			intersection_loop_1:
+			.reg .pred %intersections_exit_1;
+			intersection_exit.pred %intersections_exit_1, %intersection_counter_1;
+			@%intersections_exit_1 bra exit_intersection_label_1;
+			.reg .pred %run_intersection_1;
+			run_intersection.pred %run_intersection_1, %intersection_counter_1;
+			@!%run_intersection_1 bra skip_intersection_label_1;
+			call_intersection_shader %intersection_counter_1;
+			skip_intersection_label_1:
+			add.u32 %intersection_counter_1, %intersection_counter_1, 1;
+			bra intersection_loop_1;
+			exit_intersection_label_1:
 
-			.reg .pred %skip_miss_1;
-			setp.eq.u32 %skip_miss_1, %run_miss_1, %const0_u32;
-			@%skip_miss_1 bra skip_miss_label_1;
+			.reg .pred %hit_geometry_1;
+			hit_geometry.pred %hit_geometry_1;
+
+			@!%hit_geometry_1 bra exit_closest_hit_label_1;
+			.reg .u32 %closest_hit_shaderID_1;
+			get_closest_hit_shaderID %closest_hit_shaderID_1;
+			.reg .pred %skip_closest_hit_2_1;
+			setp.ne.u32 %skip_closest_hit_2_1, %closest_hit_shaderID_1, 2;
+			@%skip_closest_hit_2_1 bra skip_closest_hit_label_2_1;
+			call_closest_hit_shader 2;
+			skip_closest_hit_label_2_1:
+			exit_closest_hit_label_1:
+
+			@%hit_geometry_1 bra skip_miss_label_1;
 			call_miss_shader ;
 			skip_miss_label_1:
 
@@ -799,11 +866,12 @@
 			.reg .pred %ssa_155;
 			setp.lt.f32 %ssa_155, %ssa_154_3, %ssa_145; // vec1 1 ssa_155 = flt! ssa_154.w, ssa_145
 
-			.reg .f32 %ssa_156;
-			selp.f32 %ssa_156, %ssa_8, %ssa_6, %ssa_155; // vec1 32 ssa_156 = bcsel ssa_155, ssa_8, ssa_6
+			.reg  .f32 %ssa_156;
+			selp.f32 %ssa_156, %ssa_8_bits, %ssa_6_bits, %ssa_155; // vec1 32 ssa_156 = bcsel ssa_155, ssa_8, ssa_6
 
 			.reg .f32 %ssa_157;
-			add.sat.f32 %ssa_157, %ssa_156, 0F00000000;	// vec1 32 ssa_157 = fsat ssa_156
+			max.f32 %ssa_157, %ssa_156, %const0_f32;
+			min.f32 %ssa_157, %ssa_157, %const1_f32;
 
 			.reg .f32 %ssa_158;
 			mul.f32 %ssa_158, %ssa_137_0, %ssa_157; // vec1 32 ssa_158 = fmul ssa_137.x, ssa_157
@@ -831,14 +899,14 @@
 			.reg .f32 %ssa_165;
 			neg.f32 %ssa_165, %ssa_134_0; // vec1 32 ssa_165 = fneg ssa_134.x
 
-			.reg .f32 %ssa_166;
-			selp.f32 %ssa_166, %ssa_163, %ssa_134_1, %ssa_162; // vec1 32 ssa_166 = bcsel ssa_162, ssa_163, ssa_134.y
+			.reg  .f32 %ssa_166;
+			selp.f32 %ssa_166, %ssa_163_bits, %ssa_134_1, %ssa_162; // vec1 32 ssa_166 = bcsel ssa_162, ssa_163, ssa_134.y
 
-			.reg .f32 %ssa_167;
+			.reg  .f32 %ssa_167;
 			selp.f32 %ssa_167, %ssa_134_2, %ssa_165, %ssa_162; // vec1 32 ssa_167 = bcsel ssa_162, ssa_134.z, ssa_165
 
-			.reg .f32 %ssa_168;
-			selp.f32 %ssa_168, %ssa_164, %ssa_163, %ssa_162; // vec1 32 ssa_168 = bcsel ssa_162, ssa_164, ssa_163
+			.reg  .f32 %ssa_168;
+			selp.f32 %ssa_168, %ssa_164, %ssa_163_bits, %ssa_162; // vec1 32 ssa_168 = bcsel ssa_162, ssa_164, ssa_163
 
 			.reg .f32 %ssa_169;
 			mul.f32 %ssa_169, %ssa_134_2, %ssa_167; // vec1 32 ssa_169 = fmul ssa_134.z, ssa_167
@@ -944,19 +1012,37 @@
 			mov.f32 %ssa_199_1, %ssa_197;
 			mov.f32 %ssa_199_2, %ssa_198; // vec3 32 ssa_199 = vec3 ssa_196, ssa_197, ssa_198
 
-			.reg .u32 %run_closest_hit_2;
-			.reg .u32 %run_miss_2;
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_199_0, %ssa_199_1, %ssa_199_2, %ssa_16, %run_closest_hit_2, %run_miss_2; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_199, %ssa_16, %ssa_129) ()
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_199_0, %ssa_199_1, %ssa_199_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_199, %ssa_16, %ssa_129) ()
 
-			.reg .pred %skip_closest_hit_2;
-			setp.eq.u32 %skip_closest_hit_2, %run_closest_hit_2, %const0_u32;
-			@%skip_closest_hit_2 bra skip_closest_hit_label_2;
-			call_closest_hit_shader ;
-			skip_closest_hit_label_2:
+			.reg .u32 %intersection_counter_2;
+			mov.u32 %intersection_counter_2, 0;
+			intersection_loop_2:
+			.reg .pred %intersections_exit_2;
+			intersection_exit.pred %intersections_exit_2, %intersection_counter_2;
+			@%intersections_exit_2 bra exit_intersection_label_2;
+			.reg .pred %run_intersection_2;
+			run_intersection.pred %run_intersection_2, %intersection_counter_2;
+			@!%run_intersection_2 bra skip_intersection_label_2;
+			call_intersection_shader %intersection_counter_2;
+			skip_intersection_label_2:
+			add.u32 %intersection_counter_2, %intersection_counter_2, 1;
+			bra intersection_loop_2;
+			exit_intersection_label_2:
 
-			.reg .pred %skip_miss_2;
-			setp.eq.u32 %skip_miss_2, %run_miss_2, %const0_u32;
-			@%skip_miss_2 bra skip_miss_label_2;
+			.reg .pred %hit_geometry_2;
+			hit_geometry.pred %hit_geometry_2;
+
+			@!%hit_geometry_2 bra exit_closest_hit_label_2;
+			.reg .u32 %closest_hit_shaderID_2;
+			get_closest_hit_shaderID %closest_hit_shaderID_2;
+			.reg .pred %skip_closest_hit_2_2;
+			setp.ne.u32 %skip_closest_hit_2_2, %closest_hit_shaderID_2, 2;
+			@%skip_closest_hit_2_2 bra skip_closest_hit_label_2_2;
+			call_closest_hit_shader 2;
+			skip_closest_hit_label_2_2:
+			exit_closest_hit_label_2:
+
+			@%hit_geometry_2 bra skip_miss_label_2;
 			call_miss_shader ;
 			skip_miss_label_2:
 
@@ -992,19 +1078,37 @@
 			mov.f32 %ssa_204_1, %ssa_134_1;
 			mov.f32 %ssa_204_2, %ssa_134_2; // vec3 32 ssa_204 = vec3 ssa_134.x, ssa_134.y, ssa_134.z
 
-			.reg .u32 %run_closest_hit_3;
-			.reg .u32 %run_miss_3;
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16, %run_closest_hit_3, %run_miss_3; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
 
-			.reg .pred %skip_closest_hit_3;
-			setp.eq.u32 %skip_closest_hit_3, %run_closest_hit_3, %const0_u32;
-			@%skip_closest_hit_3 bra skip_closest_hit_label_3;
-			call_closest_hit_shader ;
-			skip_closest_hit_label_3:
+			.reg .u32 %intersection_counter_3;
+			mov.u32 %intersection_counter_3, 0;
+			intersection_loop_3:
+			.reg .pred %intersections_exit_3;
+			intersection_exit.pred %intersections_exit_3, %intersection_counter_3;
+			@%intersections_exit_3 bra exit_intersection_label_3;
+			.reg .pred %run_intersection_3;
+			run_intersection.pred %run_intersection_3, %intersection_counter_3;
+			@!%run_intersection_3 bra skip_intersection_label_3;
+			call_intersection_shader %intersection_counter_3;
+			skip_intersection_label_3:
+			add.u32 %intersection_counter_3, %intersection_counter_3, 1;
+			bra intersection_loop_3;
+			exit_intersection_label_3:
 
-			.reg .pred %skip_miss_3;
-			setp.eq.u32 %skip_miss_3, %run_miss_3, %const0_u32;
-			@%skip_miss_3 bra skip_miss_label_3;
+			.reg .pred %hit_geometry_3;
+			hit_geometry.pred %hit_geometry_3;
+
+			@!%hit_geometry_3 bra exit_closest_hit_label_3;
+			.reg .u32 %closest_hit_shaderID_3;
+			get_closest_hit_shaderID %closest_hit_shaderID_3;
+			.reg .pred %skip_closest_hit_2_3;
+			setp.ne.u32 %skip_closest_hit_2_3, %closest_hit_shaderID_3, 2;
+			@%skip_closest_hit_2_3 bra skip_closest_hit_label_2_3;
+			call_closest_hit_shader 2;
+			skip_closest_hit_label_2_3:
+			exit_closest_hit_label_3:
+
+			@%hit_geometry_3 bra skip_miss_label_3;
 			call_miss_shader ;
 			skip_miss_label_3:
 
@@ -1058,19 +1162,37 @@
 			mov.f32 %ssa_215_1, %ssa_213;
 			mov.f32 %ssa_215_2, %ssa_214; // vec3 32 ssa_215 = vec3 ssa_212, ssa_213, ssa_214
 
-			.reg .u32 %run_closest_hit_4;
-			.reg .u32 %run_miss_4;
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_215_0, %ssa_215_1, %ssa_215_2, %ssa_16, %run_closest_hit_4, %run_miss_4; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_215, %ssa_16, %ssa_129) ()
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_215_0, %ssa_215_1, %ssa_215_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_215, %ssa_16, %ssa_129) ()
 
-			.reg .pred %skip_closest_hit_4;
-			setp.eq.u32 %skip_closest_hit_4, %run_closest_hit_4, %const0_u32;
-			@%skip_closest_hit_4 bra skip_closest_hit_label_4;
-			call_closest_hit_shader ;
-			skip_closest_hit_label_4:
+			.reg .u32 %intersection_counter_4;
+			mov.u32 %intersection_counter_4, 0;
+			intersection_loop_4:
+			.reg .pred %intersections_exit_4;
+			intersection_exit.pred %intersections_exit_4, %intersection_counter_4;
+			@%intersections_exit_4 bra exit_intersection_label_4;
+			.reg .pred %run_intersection_4;
+			run_intersection.pred %run_intersection_4, %intersection_counter_4;
+			@!%run_intersection_4 bra skip_intersection_label_4;
+			call_intersection_shader %intersection_counter_4;
+			skip_intersection_label_4:
+			add.u32 %intersection_counter_4, %intersection_counter_4, 1;
+			bra intersection_loop_4;
+			exit_intersection_label_4:
 
-			.reg .pred %skip_miss_4;
-			setp.eq.u32 %skip_miss_4, %run_miss_4, %const0_u32;
-			@%skip_miss_4 bra skip_miss_label_4;
+			.reg .pred %hit_geometry_4;
+			hit_geometry.pred %hit_geometry_4;
+
+			@!%hit_geometry_4 bra exit_closest_hit_label_4;
+			.reg .u32 %closest_hit_shaderID_4;
+			get_closest_hit_shaderID %closest_hit_shaderID_4;
+			.reg .pred %skip_closest_hit_2_4;
+			setp.ne.u32 %skip_closest_hit_2_4, %closest_hit_shaderID_4, 2;
+			@%skip_closest_hit_2_4 bra skip_closest_hit_label_2_4;
+			call_closest_hit_shader 2;
+			skip_closest_hit_label_2_4:
+			exit_closest_hit_label_4:
+
+			@%hit_geometry_4 bra skip_miss_label_4;
 			call_miss_shader ;
 			skip_miss_label_4:
 
@@ -1096,19 +1218,37 @@
 			.reg .f32 %ssa_219;
 			add.f32 %ssa_219, %ssa_207, %ssa_218;	// vec1 32 ssa_219 = fadd ssa_207, ssa_218
 
-			.reg .u32 %run_closest_hit_5;
-			.reg .u32 %run_miss_5;
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16, %run_closest_hit_5, %run_miss_5; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
 
-			.reg .pred %skip_closest_hit_5;
-			setp.eq.u32 %skip_closest_hit_5, %run_closest_hit_5, %const0_u32;
-			@%skip_closest_hit_5 bra skip_closest_hit_label_5;
-			call_closest_hit_shader ;
-			skip_closest_hit_label_5:
+			.reg .u32 %intersection_counter_5;
+			mov.u32 %intersection_counter_5, 0;
+			intersection_loop_5:
+			.reg .pred %intersections_exit_5;
+			intersection_exit.pred %intersections_exit_5, %intersection_counter_5;
+			@%intersections_exit_5 bra exit_intersection_label_5;
+			.reg .pred %run_intersection_5;
+			run_intersection.pred %run_intersection_5, %intersection_counter_5;
+			@!%run_intersection_5 bra skip_intersection_label_5;
+			call_intersection_shader %intersection_counter_5;
+			skip_intersection_label_5:
+			add.u32 %intersection_counter_5, %intersection_counter_5, 1;
+			bra intersection_loop_5;
+			exit_intersection_label_5:
 
-			.reg .pred %skip_miss_5;
-			setp.eq.u32 %skip_miss_5, %run_miss_5, %const0_u32;
-			@%skip_miss_5 bra skip_miss_label_5;
+			.reg .pred %hit_geometry_5;
+			hit_geometry.pred %hit_geometry_5;
+
+			@!%hit_geometry_5 bra exit_closest_hit_label_5;
+			.reg .u32 %closest_hit_shaderID_5;
+			get_closest_hit_shaderID %closest_hit_shaderID_5;
+			.reg .pred %skip_closest_hit_2_5;
+			setp.ne.u32 %skip_closest_hit_2_5, %closest_hit_shaderID_5, 2;
+			@%skip_closest_hit_2_5 bra skip_closest_hit_label_2_5;
+			call_closest_hit_shader 2;
+			skip_closest_hit_label_2_5:
+			exit_closest_hit_label_5:
+
+			@%hit_geometry_5 bra skip_miss_label_5;
 			call_miss_shader ;
 			skip_miss_label_5:
 
@@ -1143,7 +1283,8 @@
 			mul.f32 %ssa_225, %ssa_224, %ssa_224;	// vec1 32 ssa_225 = fmul ssa_224, ssa_224
 
 			.reg .f32 %ssa_226;
-			add.sat.f32 %ssa_226, %ssa_225, 0F00000000;	// vec1 32 ssa_226 = fsat ssa_225
+			max.f32 %ssa_226, %ssa_225, %const0_f32;
+			min.f32 %ssa_226, %ssa_226, %const1_f32;
 
 			.reg .f32 %ssa_227;
 			mul.f32 %ssa_227, %ssa_158, %ssa_226;	// vec1 32 ssa_227 = fmul ssa_158, ssa_226
@@ -1620,5 +1761,6 @@
 	// succs: block_15 
 	// end_block block_14:
 	// block block_15:
+	shader_exit:
 	ret ;
 }

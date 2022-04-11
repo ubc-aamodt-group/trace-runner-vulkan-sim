@@ -9,6 +9,30 @@
 // shared: 0
 // decl_function main (0 params)
 .entry MESA_SHADER_RAYGEN_func0_main () {
+	.reg .u32 %launch_ID_0;
+	.reg .u32 %launch_ID_1;
+	.reg .u32 %launch_ID_2;
+	load_ray_launch_id %launch_ID_0, %launch_ID_1, %launch_ID_2;
+	
+	.reg .u32 %launch_Size_0;
+	.reg .u32 %launch_Size_1;
+	.reg .u32 %launch_Size_2;
+	load_ray_launch_size %launch_Size_0, %launch_Size_1, %launch_Size_2;
+	
+	
+	.reg .pred %bigger_0;
+	setp.ge.u32 %bigger_0, %launch_ID_0, %launch_Size_0;
+	
+	.reg .pred %bigger_1;
+	setp.ge.u32 %bigger_1, %launch_ID_1, %launch_Size_1;
+	
+	.reg .pred %bigger_2;
+	setp.ge.u32 %bigger_2, %launch_ID_2, %launch_Size_2;
+	
+	@%bigger_0 bra shader_exit;
+	@%bigger_1 bra shader_exit;
+	@%bigger_2 bra shader_exit;
+
 	.reg  .f32 %ssa_127;
 
 	.reg  .f32 %ssa_126;
@@ -31,10 +55,15 @@
 	rt_alloc_mem %prd, 52, 8; // decl_var  INTERP_MODE_NONE hitPayload prd
 
 
+	.reg .u64 %temp_u64;
+	.reg .u32 %temp_u32;
 	.reg .f32 %temp_f32;
 	.reg .pred %temp_pred;
 	.reg .f32 %const1_f32;
 	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .f32 %const0_f32;
+	mov.f32 %const0_f32, 0F00000000;
 
 	.reg .u32 %const0_u32;
 	mov.u32 %const0_u32, 0;
@@ -45,7 +74,9 @@
 	// start_block block_0:
 	// preds: 
 	.reg .f32 %ssa_0;
-	mov.f32 %ssa_0, 0F000000ff;	// vec1 32 ssa_0 = undefined
+	mov.f32 %ssa_0, 0F000000ff; // vec1 32 ssa_0 = undefined
+	.reg .b32 %ssa_0_bits;
+	mov.f32 %ssa_0_bits, 0F000000ff;
 
 	.reg .f32 %ssa_1;
 	mov.f32 %ssa_1, 0F00000000; // vec1 32 ssa_1 = load_const (0x00000000 /* 0.000000 */)
@@ -551,19 +582,37 @@
 // vec3 32 ssa_107 = intrinsic load_deref (%ssa_95) (0) /* access=0 */
 
 
-		.reg .u32 %run_closest_hit_0;
-		.reg .u32 %run_miss_0;
-		trace_ray %ssa_105, %ssa_2, %ssa_4, %ssa_1, %ssa_1, %ssa_1, %ssa_106_0, %ssa_106_1, %ssa_106_2, %ssa_9, %ssa_107_0, %ssa_107_1, %ssa_107_2, %ssa_8, %run_closest_hit_0, %run_miss_0; // intrinsic trace_ray (%ssa_105, %ssa_2, %ssa_4, %ssa_1, %ssa_1, %ssa_1, %ssa_106, %ssa_9, %ssa_107, %ssa_8, %ssa_92) ()
+		trace_ray %ssa_105, %ssa_2, %ssa_4, %ssa_1, %ssa_1, %ssa_1, %ssa_106_0, %ssa_106_1, %ssa_106_2, %ssa_9, %ssa_107_0, %ssa_107_1, %ssa_107_2, %ssa_8; // intrinsic trace_ray (%ssa_105, %ssa_2, %ssa_4, %ssa_1, %ssa_1, %ssa_1, %ssa_106, %ssa_9, %ssa_107, %ssa_8, %ssa_92) ()
 
-		.reg .pred %skip_closest_hit_0;
-		setp.eq.u32 %skip_closest_hit_0, %run_closest_hit_0, %const0_u32;
-		@%skip_closest_hit_0 bra skip_closest_hit_label_0;
-		call_closest_hit_shader ;
-		skip_closest_hit_label_0:
+		.reg .u32 %intersection_counter_0;
+		mov.u32 %intersection_counter_0, 0;
+		intersection_loop_0:
+		.reg .pred %intersections_exit_0;
+		intersection_exit.pred %intersections_exit_0, %intersection_counter_0;
+		@%intersections_exit_0 bra exit_intersection_label_0;
+		.reg .pred %run_intersection_0;
+		run_intersection.pred %run_intersection_0, %intersection_counter_0;
+		@!%run_intersection_0 bra skip_intersection_label_0;
+		call_intersection_shader %intersection_counter_0;
+		skip_intersection_label_0:
+		add.u32 %intersection_counter_0, %intersection_counter_0, 1;
+		bra intersection_loop_0;
+		exit_intersection_label_0:
 
-		.reg .pred %skip_miss_0;
-		setp.eq.u32 %skip_miss_0, %run_miss_0, %const0_u32;
-		@%skip_miss_0 bra skip_miss_label_0;
+		.reg .pred %hit_geometry_0;
+		hit_geometry.pred %hit_geometry_0;
+
+		@!%hit_geometry_0 bra exit_closest_hit_label_0;
+		.reg .u32 %closest_hit_shaderID_0;
+		get_closest_hit_shaderID %closest_hit_shaderID_0;
+		.reg .pred %skip_closest_hit_3_0;
+		setp.ne.u32 %skip_closest_hit_3_0, %closest_hit_shaderID_0, 3;
+		@%skip_closest_hit_3_0 bra skip_closest_hit_label_3_0;
+		call_closest_hit_shader 3;
+		skip_closest_hit_label_3_0:
+		exit_closest_hit_label_0:
+
+		@%hit_geometry_0 bra skip_miss_label_0;
 		call_miss_shader ;
 		skip_miss_label_0:
 
@@ -717,5 +766,6 @@
 	// succs: block_12 
 	// end_block block_11:
 	// block block_12:
+	shader_exit:
 	ret ;
 }
