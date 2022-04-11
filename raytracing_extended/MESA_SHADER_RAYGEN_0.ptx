@@ -667,16 +667,17 @@
 		.reg .b64 %ssa_129;
 	mov.b64 %ssa_129, %hitValue; // vec1 32 ssa_129 = deref_var &hitValue (function_temp Payload) 
 
-		trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127_0, %ssa_127_1, %ssa_127_2, %ssa_17, %ssa_128_0, %ssa_128_1, %ssa_128_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127, %ssa_17, %ssa_128, %ssa_16, %ssa_129) ()
+		.reg .u32 %traversal_finished_0;
+		trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127_0, %ssa_127_1, %ssa_127_2, %ssa_17, %ssa_128_0, %ssa_128_1, %ssa_128_2, %ssa_16, %traversal_finished_0; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_127, %ssa_17, %ssa_128, %ssa_16, %ssa_129) ()
 
 		.reg .u32 %intersection_counter_0;
 		mov.u32 %intersection_counter_0, 0;
 		intersection_loop_0:
 		.reg .pred %intersections_exit_0;
-		intersection_exit.pred %intersections_exit_0, %intersection_counter_0;
+		intersection_exit.pred %intersections_exit_0, %intersection_counter_0, %traversal_finished_0;
 		@%intersections_exit_0 bra exit_intersection_label_0;
 		.reg .pred %run_intersection_0;
-		run_intersection.pred %run_intersection_0, %intersection_counter_0;
+		run_intersection.pred %run_intersection_0, %intersection_counter_0, %traversal_finished_0;
 		@!%run_intersection_0 bra skip_intersection_label_0;
 		call_intersection_shader %intersection_counter_0;
 		skip_intersection_label_0:
@@ -685,7 +686,7 @@
 		exit_intersection_label_0:
 
 		.reg .pred %hit_geometry_0;
-		hit_geometry.pred %hit_geometry_0;
+		hit_geometry.pred %hit_geometry_0, %traversal_finished_0;
 
 		@!%hit_geometry_0 bra exit_closest_hit_label_0;
 		.reg .u32 %closest_hit_shaderID_0;
@@ -816,16 +817,17 @@
 			mov.f32 %ssa_153_1, %ssa_149;
 			mov.f32 %ssa_153_2, %ssa_151; // vec3 32 ssa_153 = vec3 ssa_148, ssa_149, ssa_151
 
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_153_0, %ssa_153_1, %ssa_153_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_153, %ssa_16, %ssa_129) ()
+			.reg .u32 %traversal_finished_1;
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_153_0, %ssa_153_1, %ssa_153_2, %ssa_16, %traversal_finished_1; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_153, %ssa_16, %ssa_129) ()
 
 			.reg .u32 %intersection_counter_1;
 			mov.u32 %intersection_counter_1, 0;
 			intersection_loop_1:
 			.reg .pred %intersections_exit_1;
-			intersection_exit.pred %intersections_exit_1, %intersection_counter_1;
+			intersection_exit.pred %intersections_exit_1, %intersection_counter_1, %traversal_finished_1;
 			@%intersections_exit_1 bra exit_intersection_label_1;
 			.reg .pred %run_intersection_1;
-			run_intersection.pred %run_intersection_1, %intersection_counter_1;
+			run_intersection.pred %run_intersection_1, %intersection_counter_1, %traversal_finished_1;
 			@!%run_intersection_1 bra skip_intersection_label_1;
 			call_intersection_shader %intersection_counter_1;
 			skip_intersection_label_1:
@@ -834,7 +836,7 @@
 			exit_intersection_label_1:
 
 			.reg .pred %hit_geometry_1;
-			hit_geometry.pred %hit_geometry_1;
+			hit_geometry.pred %hit_geometry_1, %traversal_finished_1;
 
 			@!%hit_geometry_1 bra exit_closest_hit_label_1;
 			.reg .u32 %closest_hit_shaderID_1;
@@ -1012,16 +1014,17 @@
 			mov.f32 %ssa_199_1, %ssa_197;
 			mov.f32 %ssa_199_2, %ssa_198; // vec3 32 ssa_199 = vec3 ssa_196, ssa_197, ssa_198
 
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_199_0, %ssa_199_1, %ssa_199_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_199, %ssa_16, %ssa_129) ()
+			.reg .u32 %traversal_finished_2;
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_199_0, %ssa_199_1, %ssa_199_2, %ssa_16, %traversal_finished_2; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_199, %ssa_16, %ssa_129) ()
 
 			.reg .u32 %intersection_counter_2;
 			mov.u32 %intersection_counter_2, 0;
 			intersection_loop_2:
 			.reg .pred %intersections_exit_2;
-			intersection_exit.pred %intersections_exit_2, %intersection_counter_2;
+			intersection_exit.pred %intersections_exit_2, %intersection_counter_2, %traversal_finished_2;
 			@%intersections_exit_2 bra exit_intersection_label_2;
 			.reg .pred %run_intersection_2;
-			run_intersection.pred %run_intersection_2, %intersection_counter_2;
+			run_intersection.pred %run_intersection_2, %intersection_counter_2, %traversal_finished_2;
 			@!%run_intersection_2 bra skip_intersection_label_2;
 			call_intersection_shader %intersection_counter_2;
 			skip_intersection_label_2:
@@ -1030,7 +1033,7 @@
 			exit_intersection_label_2:
 
 			.reg .pred %hit_geometry_2;
-			hit_geometry.pred %hit_geometry_2;
+			hit_geometry.pred %hit_geometry_2, %traversal_finished_2;
 
 			@!%hit_geometry_2 bra exit_closest_hit_label_2;
 			.reg .u32 %closest_hit_shaderID_2;
@@ -1078,16 +1081,17 @@
 			mov.f32 %ssa_204_1, %ssa_134_1;
 			mov.f32 %ssa_204_2, %ssa_134_2; // vec3 32 ssa_204 = vec3 ssa_134.x, ssa_134.y, ssa_134.z
 
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
+			.reg .u32 %traversal_finished_3;
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16, %traversal_finished_3; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
 
 			.reg .u32 %intersection_counter_3;
 			mov.u32 %intersection_counter_3, 0;
 			intersection_loop_3:
 			.reg .pred %intersections_exit_3;
-			intersection_exit.pred %intersections_exit_3, %intersection_counter_3;
+			intersection_exit.pred %intersections_exit_3, %intersection_counter_3, %traversal_finished_3;
 			@%intersections_exit_3 bra exit_intersection_label_3;
 			.reg .pred %run_intersection_3;
-			run_intersection.pred %run_intersection_3, %intersection_counter_3;
+			run_intersection.pred %run_intersection_3, %intersection_counter_3, %traversal_finished_3;
 			@!%run_intersection_3 bra skip_intersection_label_3;
 			call_intersection_shader %intersection_counter_3;
 			skip_intersection_label_3:
@@ -1096,7 +1100,7 @@
 			exit_intersection_label_3:
 
 			.reg .pred %hit_geometry_3;
-			hit_geometry.pred %hit_geometry_3;
+			hit_geometry.pred %hit_geometry_3, %traversal_finished_3;
 
 			@!%hit_geometry_3 bra exit_closest_hit_label_3;
 			.reg .u32 %closest_hit_shaderID_3;
@@ -1162,16 +1166,17 @@
 			mov.f32 %ssa_215_1, %ssa_213;
 			mov.f32 %ssa_215_2, %ssa_214; // vec3 32 ssa_215 = vec3 ssa_212, ssa_213, ssa_214
 
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_215_0, %ssa_215_1, %ssa_215_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_215, %ssa_16, %ssa_129) ()
+			.reg .u32 %traversal_finished_4;
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_215_0, %ssa_215_1, %ssa_215_2, %ssa_16, %traversal_finished_4; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_215, %ssa_16, %ssa_129) ()
 
 			.reg .u32 %intersection_counter_4;
 			mov.u32 %intersection_counter_4, 0;
 			intersection_loop_4:
 			.reg .pred %intersections_exit_4;
-			intersection_exit.pred %intersections_exit_4, %intersection_counter_4;
+			intersection_exit.pred %intersections_exit_4, %intersection_counter_4, %traversal_finished_4;
 			@%intersections_exit_4 bra exit_intersection_label_4;
 			.reg .pred %run_intersection_4;
-			run_intersection.pred %run_intersection_4, %intersection_counter_4;
+			run_intersection.pred %run_intersection_4, %intersection_counter_4, %traversal_finished_4;
 			@!%run_intersection_4 bra skip_intersection_label_4;
 			call_intersection_shader %intersection_counter_4;
 			skip_intersection_label_4:
@@ -1180,7 +1185,7 @@
 			exit_intersection_label_4:
 
 			.reg .pred %hit_geometry_4;
-			hit_geometry.pred %hit_geometry_4;
+			hit_geometry.pred %hit_geometry_4, %traversal_finished_4;
 
 			@!%hit_geometry_4 bra exit_closest_hit_label_4;
 			.reg .u32 %closest_hit_shaderID_4;
@@ -1218,16 +1223,17 @@
 			.reg .f32 %ssa_219;
 			add.f32 %ssa_219, %ssa_207, %ssa_218;	// vec1 32 ssa_219 = fadd ssa_207, ssa_218
 
-			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
+			.reg .u32 %traversal_finished_5;
+			trace_ray %ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152_0, %ssa_152_1, %ssa_152_2, %ssa_17, %ssa_204_0, %ssa_204_1, %ssa_204_2, %ssa_16, %traversal_finished_5; // intrinsic trace_ray (%ssa_126, %ssa_1, %ssa_7, %ssa_5, %ssa_5, %ssa_5, %ssa_152, %ssa_17, %ssa_204, %ssa_16, %ssa_129) ()
 
 			.reg .u32 %intersection_counter_5;
 			mov.u32 %intersection_counter_5, 0;
 			intersection_loop_5:
 			.reg .pred %intersections_exit_5;
-			intersection_exit.pred %intersections_exit_5, %intersection_counter_5;
+			intersection_exit.pred %intersections_exit_5, %intersection_counter_5, %traversal_finished_5;
 			@%intersections_exit_5 bra exit_intersection_label_5;
 			.reg .pred %run_intersection_5;
-			run_intersection.pred %run_intersection_5, %intersection_counter_5;
+			run_intersection.pred %run_intersection_5, %intersection_counter_5, %traversal_finished_5;
 			@!%run_intersection_5 bra skip_intersection_label_5;
 			call_intersection_shader %intersection_counter_5;
 			skip_intersection_label_5:
@@ -1236,7 +1242,7 @@
 			exit_intersection_label_5:
 
 			.reg .pred %hit_geometry_5;
-			hit_geometry.pred %hit_geometry_5;
+			hit_geometry.pred %hit_geometry_5, %traversal_finished_5;
 
 			@!%hit_geometry_5 bra exit_closest_hit_label_5;
 			.reg .u32 %closest_hit_shaderID_5;
