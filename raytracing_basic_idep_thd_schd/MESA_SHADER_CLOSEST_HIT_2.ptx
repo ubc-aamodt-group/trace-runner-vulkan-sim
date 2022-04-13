@@ -1,0 +1,87 @@
+.version 2.0
+.target sm_10, map_f64_to_f32
+
+// shader: MESA_SHADER_CLOSEST_HIT
+// inputs: 0
+// outputs: 0
+// uniforms: 0
+// shared: 0
+// decl_function main (0 params)
+.entry MESA_SHADER_CLOSEST_HIT_func2_main () {
+	.reg .b64 %attribs;
+	rt_alloc_mem %attribs, 36, 8192; // decl_var ray_hit_attrib INTERP_MODE_NONE vec3 attribs
+	.reg .b64 %hitValue;
+	rt_alloc_mem %hitValue, 36, 4096; // decl_var shader_call_data INTERP_MODE_NONE vec3 hitValue
+
+
+	.reg .u64 %temp_u64;
+	.reg .u32 %temp_u32;
+	.reg .f32 %temp_f32;
+	.reg .pred %temp_pred;
+	.reg .f32 %const1_f32;
+	mov.f32 %const1_f32, 0F3f800000;
+
+	.reg .f32 %const0_f32;
+	mov.f32 %const0_f32, 0F00000000;
+
+	.reg .u32 %const0_u32;
+	mov.u32 %const0_u32, 0;
+
+	.reg .u16 %const1_u16;
+	mov.u16 %const1_u16, 1;
+
+	// start_block block_0:
+	// preds: 
+	.reg .f32 %ssa_0;
+	mov.f32 %ssa_0, 0F3f800000; // vec1 32 ssa_0 = load_const (0x3f800000 /* 1.000000 */)
+	.reg .b32 %ssa_0_bits;
+	mov.f32 %ssa_0_bits, 0F3f800000;
+
+	.reg .b64 %ssa_1;
+	mov.b64 %ssa_1, %attribs; // vec1 32 ssa_1 = deref_var &attribs (ray_hit_attrib vec3) 
+
+	.reg .f32 %ssa_2_0;
+	.reg .f32 %ssa_2_1;
+	.reg .f32 %ssa_2_2;
+	.reg .f32 %ssa_2_3;
+	ld.global.f32 %ssa_2_0, [%ssa_1 + 0];
+	ld.global.f32 %ssa_2_1, [%ssa_1 + 4];
+	ld.global.f32 %ssa_2_2, [%ssa_1 + 8];
+// vec3 32 ssa_2 = intrinsic load_deref (%ssa_1) (0) /* access=0 */
+
+
+	.reg .f32 %ssa_3;
+	neg.f32 %ssa_3, %ssa_2_0; // vec1 32 ssa_3 = fneg ssa_2.x
+
+	.reg .f32 %ssa_4;
+	add.f32 %ssa_4, %ssa_0, %ssa_3;	// vec1 32 ssa_4 = fadd ssa_0, ssa_3
+
+	.reg .f32 %ssa_5;
+	neg.f32 %ssa_5, %ssa_2_1; // vec1 32 ssa_5 = fneg ssa_2.y
+
+	.reg .f32 %ssa_6;
+	add.f32 %ssa_6, %ssa_4, %ssa_5;	// vec1 32 ssa_6 = fadd ssa_4, ssa_5
+
+	.reg .f32 %ssa_7_0;
+	.reg .f32 %ssa_7_1;
+	.reg .f32 %ssa_7_2;
+	.reg .f32 %ssa_7_3;
+	mov.f32 %ssa_7_0, %ssa_6;
+	mov.f32 %ssa_7_1, %ssa_2_0;
+	mov.f32 %ssa_7_2, %ssa_2_1; // vec3 32 ssa_7 = vec3 ssa_6, ssa_2.x, ssa_2.y
+
+	.reg .b64 %ssa_8;
+	mov.b64 %ssa_8, %hitValue; // vec1 32 ssa_8 = deref_var &hitValue (shader_call_data vec3) 
+
+	st.global.f32 [%ssa_8 + 0], %ssa_7_0;
+	st.global.f32 [%ssa_8 + 4], %ssa_7_1;
+	st.global.f32 [%ssa_8 + 8], %ssa_7_2;
+// intrinsic store_deref (%ssa_8, %ssa_7) (7, 0) /* wrmask=xyz */ /* access=0 */
+
+
+	// succs: block_1 
+	// end_block block_0:
+	// block block_1:
+	shader_exit:
+	ret ;
+}
