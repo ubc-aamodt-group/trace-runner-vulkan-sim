@@ -70,13 +70,23 @@
 	.reg .f32 %ssa_8_1;
 	.reg .f32 %ssa_8_2;
 	.reg .f32 %ssa_8_3;
-	load_ray_world_origin %ssa_8_0, %ssa_8_1, %ssa_8_2; // vec3 32 ssa_8 = intrinsic load_ray_world_origin () ()
+	.reg .b64 %ssa_8_address;
+	load_ray_world_origin %ssa_8_address; // vec3 32 ssa_8 = intrinsic load_ray_world_origin () ()
+	ld.global.f32 %ssa_8_0, [%ssa_8_address + 0];
+	ld.global.f32 %ssa_8_1, [%ssa_8_address + 4];
+	ld.global.f32 %ssa_8_2, [%ssa_8_address + 8];
+	ld.global.f32 %ssa_8_3, [%ssa_8_address + 12];
 
 	.reg .f32 %ssa_9_0;
 	.reg .f32 %ssa_9_1;
 	.reg .f32 %ssa_9_2;
 	.reg .f32 %ssa_9_3;
-	load_ray_world_direction %ssa_9_0, %ssa_9_1, %ssa_9_2; // vec3 32 ssa_9 = intrinsic load_ray_world_direction () ()
+	.reg .b64 %ssa_9_address;
+	load_ray_world_direction %ssa_9_address; // vec3 32 ssa_9 = intrinsic load_ray_world_direction () ()
+	ld.global.f32 %ssa_9_0, [%ssa_9_address + 0];
+	ld.global.f32 %ssa_9_1, [%ssa_9_address + 4];
+	ld.global.f32 %ssa_9_2, [%ssa_9_address + 8];
+	ld.global.f32 %ssa_9_3, [%ssa_9_address + 12];
 
 	.reg .f32 %ssa_10;
 	neg.f32 %ssa_10, %ssa_7_3; // vec1 32 ssa_10 = fneg ssa_7.w

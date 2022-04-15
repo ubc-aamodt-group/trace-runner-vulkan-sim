@@ -404,7 +404,12 @@
 	.reg .f32 %ssa_68_1;
 	.reg .f32 %ssa_68_2;
 	.reg .f32 %ssa_68_3;
-	load_ray_world_direction %ssa_68_0, %ssa_68_1, %ssa_68_2; // vec3 32 ssa_68 = intrinsic load_ray_world_direction () ()
+	.reg .b64 %ssa_68_address;
+	load_ray_world_direction %ssa_68_address; // vec3 32 ssa_68 = intrinsic load_ray_world_direction () ()
+	ld.global.f32 %ssa_68_0, [%ssa_68_address + 0];
+	ld.global.f32 %ssa_68_1, [%ssa_68_address + 4];
+	ld.global.f32 %ssa_68_2, [%ssa_68_address + 8];
+	ld.global.f32 %ssa_68_3, [%ssa_68_address + 12];
 
 	.reg .f32 %ssa_69_0;
 	.reg .f32 %ssa_69_1;

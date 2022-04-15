@@ -344,7 +344,12 @@
 	.reg .f32 %ssa_54_1;
 	.reg .f32 %ssa_54_2;
 	.reg .f32 %ssa_54_3;
-	load_ray_world_origin %ssa_54_0, %ssa_54_1, %ssa_54_2; // vec3 32 ssa_54 = intrinsic load_ray_world_origin () ()
+	.reg .b64 %ssa_54_address;
+	load_ray_world_origin %ssa_54_address; // vec3 32 ssa_54 = intrinsic load_ray_world_origin () ()
+	ld.global.f32 %ssa_54_0, [%ssa_54_address + 0];
+	ld.global.f32 %ssa_54_1, [%ssa_54_address + 4];
+	ld.global.f32 %ssa_54_2, [%ssa_54_address + 8];
+	ld.global.f32 %ssa_54_3, [%ssa_54_address + 12];
 
 	.reg .f32 %ssa_55;
 	load_ray_t_max %ssa_55;	// vec1 32 ssa_55 = intrinsic load_ray_t_max () ()
@@ -353,7 +358,12 @@
 	.reg .f32 %ssa_56_1;
 	.reg .f32 %ssa_56_2;
 	.reg .f32 %ssa_56_3;
-	load_ray_world_direction %ssa_56_0, %ssa_56_1, %ssa_56_2; // vec3 32 ssa_56 = intrinsic load_ray_world_direction () ()
+	.reg .b64 %ssa_56_address;
+	load_ray_world_direction %ssa_56_address; // vec3 32 ssa_56 = intrinsic load_ray_world_direction () ()
+	ld.global.f32 %ssa_56_0, [%ssa_56_address + 0];
+	ld.global.f32 %ssa_56_1, [%ssa_56_address + 4];
+	ld.global.f32 %ssa_56_2, [%ssa_56_address + 8];
+	ld.global.f32 %ssa_56_3, [%ssa_56_address + 12];
 
 	.reg .f32 %ssa_57;
 	mul.f32 %ssa_57, %ssa_56_0, %ssa_55; // vec1 32 ssa_57 = fmul ssa_56.x, ssa_55

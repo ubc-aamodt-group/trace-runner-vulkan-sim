@@ -463,19 +463,34 @@
 	.reg .f32 %ssa_92_1;
 	.reg .f32 %ssa_92_2;
 	.reg .f32 %ssa_92_3;
-	load_ray_world_to_object %ssa_92_0, %ssa_92_1, %ssa_92_2, 0; // vec3 32 ssa_92 = intrinsic load_ray_world_to_object () (0) /* column=0 */
+	.reg .b64 %ssa_92_address;
+	load_ray_world_to_object %ssa_92_address, 0; // vec3 32 ssa_92 = intrinsic load_ray_world_to_object () (0) /* column=0 */
+	ld.global.f32 %ssa_92_0, [%ssa_92_address + 0];
+	ld.global.f32 %ssa_92_1, [%ssa_92_address + 4];
+	ld.global.f32 %ssa_92_2, [%ssa_92_address + 8];
+	ld.global.f32 %ssa_92_3, [%ssa_92_address + 12];
 
 	.reg .f32 %ssa_93_0;
 	.reg .f32 %ssa_93_1;
 	.reg .f32 %ssa_93_2;
 	.reg .f32 %ssa_93_3;
-	load_ray_world_to_object %ssa_93_0, %ssa_93_1, %ssa_93_2, 1; // vec3 32 ssa_93 = intrinsic load_ray_world_to_object () (1) /* column=1 */
+	.reg .b64 %ssa_93_address;
+	load_ray_world_to_object %ssa_93_address, 1; // vec3 32 ssa_93 = intrinsic load_ray_world_to_object () (1) /* column=1 */
+	ld.global.f32 %ssa_93_0, [%ssa_93_address + 0];
+	ld.global.f32 %ssa_93_1, [%ssa_93_address + 4];
+	ld.global.f32 %ssa_93_2, [%ssa_93_address + 8];
+	ld.global.f32 %ssa_93_3, [%ssa_93_address + 12];
 
 	.reg .f32 %ssa_94_0;
 	.reg .f32 %ssa_94_1;
 	.reg .f32 %ssa_94_2;
 	.reg .f32 %ssa_94_3;
-	load_ray_world_to_object %ssa_94_0, %ssa_94_1, %ssa_94_2, 2; // vec3 32 ssa_94 = intrinsic load_ray_world_to_object () (2) /* column=2 */
+	.reg .b64 %ssa_94_address;
+	load_ray_world_to_object %ssa_94_address, 2; // vec3 32 ssa_94 = intrinsic load_ray_world_to_object () (2) /* column=2 */
+	ld.global.f32 %ssa_94_0, [%ssa_94_address + 0];
+	ld.global.f32 %ssa_94_1, [%ssa_94_address + 4];
+	ld.global.f32 %ssa_94_2, [%ssa_94_address + 8];
+	ld.global.f32 %ssa_94_3, [%ssa_94_address + 12];
 
 	.reg .f32 %ssa_95;
 	mul.f32 %ssa_95, %ssa_92_2, %ssa_91; // vec1 32 ssa_95 = fmul ssa_92.z, ssa_91
@@ -598,25 +613,45 @@
 	.reg .f32 %ssa_134_1;
 	.reg .f32 %ssa_134_2;
 	.reg .f32 %ssa_134_3;
-	load_ray_object_to_world %ssa_134_0, %ssa_134_1, %ssa_134_2, 0; // vec3 32 ssa_134 = intrinsic load_ray_object_to_world () (0) /* column=0 */
+	.reg .b64 %ssa_134_address;
+	load_ray_object_to_world %ssa_134_address, 0; // vec3 32 ssa_134 = intrinsic load_ray_object_to_world () (0) /* column=0 */
+	ld.global.f32 %ssa_134_0, [%ssa_134_address + 0];
+	ld.global.f32 %ssa_134_1, [%ssa_134_address + 4];
+	ld.global.f32 %ssa_134_2, [%ssa_134_address + 8];
+	ld.global.f32 %ssa_134_3, [%ssa_134_address + 12];
 
 	.reg .f32 %ssa_135_0;
 	.reg .f32 %ssa_135_1;
 	.reg .f32 %ssa_135_2;
 	.reg .f32 %ssa_135_3;
-	load_ray_object_to_world %ssa_135_0, %ssa_135_1, %ssa_135_2, 1; // vec3 32 ssa_135 = intrinsic load_ray_object_to_world () (1) /* column=1 */
+	.reg .b64 %ssa_135_address;
+	load_ray_object_to_world %ssa_135_address, 1; // vec3 32 ssa_135 = intrinsic load_ray_object_to_world () (1) /* column=1 */
+	ld.global.f32 %ssa_135_0, [%ssa_135_address + 0];
+	ld.global.f32 %ssa_135_1, [%ssa_135_address + 4];
+	ld.global.f32 %ssa_135_2, [%ssa_135_address + 8];
+	ld.global.f32 %ssa_135_3, [%ssa_135_address + 12];
 
 	.reg .f32 %ssa_136_0;
 	.reg .f32 %ssa_136_1;
 	.reg .f32 %ssa_136_2;
 	.reg .f32 %ssa_136_3;
-	load_ray_object_to_world %ssa_136_0, %ssa_136_1, %ssa_136_2, 2; // vec3 32 ssa_136 = intrinsic load_ray_object_to_world () (2) /* column=2 */
+	.reg .b64 %ssa_136_address;
+	load_ray_object_to_world %ssa_136_address, 2; // vec3 32 ssa_136 = intrinsic load_ray_object_to_world () (2) /* column=2 */
+	ld.global.f32 %ssa_136_0, [%ssa_136_address + 0];
+	ld.global.f32 %ssa_136_1, [%ssa_136_address + 4];
+	ld.global.f32 %ssa_136_2, [%ssa_136_address + 8];
+	ld.global.f32 %ssa_136_3, [%ssa_136_address + 12];
 
 	.reg .f32 %ssa_137_0;
 	.reg .f32 %ssa_137_1;
 	.reg .f32 %ssa_137_2;
 	.reg .f32 %ssa_137_3;
-	load_ray_object_to_world %ssa_137_0, %ssa_137_1, %ssa_137_2, 3; // vec3 32 ssa_137 = intrinsic load_ray_object_to_world () (3) /* column=3 */
+	.reg .b64 %ssa_137_address;
+	load_ray_object_to_world %ssa_137_address, 3; // vec3 32 ssa_137 = intrinsic load_ray_object_to_world () (3) /* column=3 */
+	ld.global.f32 %ssa_137_0, [%ssa_137_address + 0];
+	ld.global.f32 %ssa_137_1, [%ssa_137_address + 4];
+	ld.global.f32 %ssa_137_2, [%ssa_137_address + 8];
+	ld.global.f32 %ssa_137_3, [%ssa_137_address + 12];
 
 	.reg .f32 %ssa_138;
 	mul.f32 %ssa_138, %ssa_136_0, %ssa_133; // vec1 32 ssa_138 = fmul ssa_136.x, ssa_133
@@ -796,7 +831,12 @@
 			.reg .f32 %ssa_176_1;
 			.reg .f32 %ssa_176_2;
 			.reg .f32 %ssa_176_3;
-			load_ray_world_direction %ssa_176_0, %ssa_176_1, %ssa_176_2; // vec3 32 ssa_176 = intrinsic load_ray_world_direction () ()
+			.reg .b64 %ssa_176_address;
+			load_ray_world_direction %ssa_176_address; // vec3 32 ssa_176 = intrinsic load_ray_world_direction () ()
+			ld.global.f32 %ssa_176_0, [%ssa_176_address + 0];
+			ld.global.f32 %ssa_176_1, [%ssa_176_address + 4];
+			ld.global.f32 %ssa_176_2, [%ssa_176_address + 8];
+			ld.global.f32 %ssa_176_3, [%ssa_176_address + 12];
 
 			.reg .f32 %ssa_177;
 	mov.f32 %ssa_177, 0F40000000; // vec1 32 ssa_177 = load_const (0x40000000 /* 2.000000 */)
@@ -1060,7 +1100,12 @@
 	.reg .f32 %ssa_250_1;
 	.reg .f32 %ssa_250_2;
 	.reg .f32 %ssa_250_3;
-	load_ray_world_direction %ssa_250_0, %ssa_250_1, %ssa_250_2; // vec3 32 ssa_250 = intrinsic load_ray_world_direction () ()
+	.reg .b64 %ssa_250_address;
+	load_ray_world_direction %ssa_250_address; // vec3 32 ssa_250 = intrinsic load_ray_world_direction () ()
+	ld.global.f32 %ssa_250_0, [%ssa_250_address + 0];
+	ld.global.f32 %ssa_250_1, [%ssa_250_address + 4];
+	ld.global.f32 %ssa_250_2, [%ssa_250_address + 8];
+	ld.global.f32 %ssa_250_3, [%ssa_250_address + 12];
 
 	.reg .f32 %ssa_251;
 	mul.f32 %ssa_251, %ssa_250_2, %ssa_118; // vec1 32 ssa_251 = fmul ssa_250.z, ssa_118

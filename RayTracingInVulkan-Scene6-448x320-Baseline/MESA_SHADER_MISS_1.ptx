@@ -98,7 +98,12 @@
 		.reg .f32 %ssa_13_1;
 		.reg .f32 %ssa_13_2;
 		.reg .f32 %ssa_13_3;
-		load_ray_world_direction %ssa_13_0, %ssa_13_1, %ssa_13_2; // vec3 32 ssa_13 = intrinsic load_ray_world_direction () ()
+		.reg .b64 %ssa_13_address;
+		load_ray_world_direction %ssa_13_address; // vec3 32 ssa_13 = intrinsic load_ray_world_direction () ()
+		ld.global.f32 %ssa_13_0, [%ssa_13_address + 0];
+		ld.global.f32 %ssa_13_1, [%ssa_13_address + 4];
+		ld.global.f32 %ssa_13_2, [%ssa_13_address + 8];
+		ld.global.f32 %ssa_13_3, [%ssa_13_address + 12];
 
 		.reg .f32 %ssa_14;
 		mul.f32 %ssa_14, %ssa_13_2, %ssa_13_2; // vec1 32 ssa_14 = fmul ssa_13.z, ssa_13.z
