@@ -2588,11 +2588,23 @@
 			ld.global.u32 %primitiveID_0, [%shader_data_address_0];
 			.reg .u32 %instanceID_0;
 			ld.global.u32 %instanceID_0, [%shader_data_address_0 + 4];
-			.reg .pred %run_intersection_0;
-			run_intersection.pred %run_intersection_0, %intersection_counter_0, %traversal_finished_0;
-			@!%run_intersection_0 bra skip_intersection_label_0;
+			.reg .u32 %intersection_shaderID_0;
+			get_intersection_shaderID %intersection_shaderID_0, %intersection_counter_0;
+			.reg .pred %skip_intersection_6_0;
+			setp.ne.u32 %skip_intersection_6_0, %intersection_shaderID_0, 6;
+			@%skip_intersection_6_0 bra skip_intersection_label_6_0;
 			call_intersection_shader %intersection_counter_0;
-			skip_intersection_label_0:
+			skip_intersection_label_6_0:
+			.reg .pred %skip_intersection_8_0;
+			setp.ne.u32 %skip_intersection_8_0, %intersection_shaderID_0, 8;
+			@%skip_intersection_8_0 bra skip_intersection_label_8_0;
+			call_intersection_shader %intersection_counter_0;
+			skip_intersection_label_8_0:
+			.reg .pred %skip_intersection_7_0;
+			setp.ne.u32 %skip_intersection_7_0, %intersection_shaderID_0, 7;
+			@%skip_intersection_7_0 bra skip_intersection_label_7_0;
+			call_intersection_shader %intersection_counter_0;
+			skip_intersection_label_7_0:
 			add.u32 %intersection_counter_0, %intersection_counter_0, 1;
 			bra intersection_loop_0;
 			exit_intersection_label_0:
