@@ -2584,13 +2584,13 @@
 			@%intersections_exit_0 bra exit_intersection_label_0;
 			.reg .b64 %shader_data_address_0;
 			get_intersection_shader_data_address %shader_data_address_0, %intersection_counter_0;
+			.reg .pred %run_intersection_0;
+			run_intersection.pred %run_intersection_0, %intersection_counter_0, %traversal_finished_0;
+			@!%run_intersection_0 bra skip_intersection_label_0;
 			.reg .u32 %primitiveID_0;
 			ld.global.u32 %primitiveID_0, [%shader_data_address_0];
 			.reg .u32 %instanceID_0;
 			ld.global.u32 %instanceID_0, [%shader_data_address_0 + 4];
-			.reg .pred %run_intersection_0;
-			run_intersection.pred %run_intersection_0, %intersection_counter_0, %traversal_finished_0;
-			@!%run_intersection_0 bra skip_intersection_label_0;
 			call_intersection_shader %intersection_counter_0;
 			skip_intersection_label_0:
 			add.u32 %intersection_counter_0, %intersection_counter_0, 1;
