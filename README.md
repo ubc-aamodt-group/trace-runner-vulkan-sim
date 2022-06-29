@@ -39,16 +39,21 @@ Clone and build this repo, vulkan_rt_trace_runner
 
 
 ### Instructions
-Two workloads are provided with the trace runner: raytracing_basic and ray_tracing_reflection
+Workloads that are provided with the trace runner: raytracing_basic, ray_tracing_reflection, raytracing_extended, RayTracingInVulkan-Scene5, RayTracingInVulkan-Scene6
+Step 2 can be ignored if you are running the provided workloads.
 
 1. In **Makefile**, change **GPGPUSIM_PATH** to the path of your gpgpusim libcudart.so
-2. Copy the folder **gpgpusimShaders/** (that contains the translated PTX shaders, descriptor set memory dumps, and shader binding table memory dumps) to **mesa/** (if you can run Vulkan-Sim's mesa on your computer then the folder should already be there)
+2. Only if you are dumping new workloads!! Copy the folder **gpgpusimShaders/** (that contains the translated PTX shaders, descriptor set memory dumps, and shader binding table memory dumps) to **mesa/** (if you can run Vulkan-Sim's mesa on your computer then the folder should already be there)
 3. Copy your gpgpusim.config to the same location as **./vulkan_rt_runner**
+
+If compilation fails due to undefined reference to libboost, you need to download libboost from https://www.boost.org/ and build from source, then include the path in the Makefile.
 
 ### Build and Run
     make
     ./vulkan_rt_runner <path_to_trace_folder> <workload>
     e.g.
-    ./vulkan_rt_runner raytracing_basic/ raytracing_basic
-    ./vulkan_rt_runner ray_tracing_reflection_dump/ ray_tracing_reflection
-    ./vulkan_rt_runner raytracing_extended/ raytracing_extended
+    ./vulkan_rt_runner raytracing_basic_448x320/ raytracing_basic
+    ./vulkan_rt_runner ray_tracing_reflection_448x320/ ray_tracing_reflection
+    ./vulkan_rt_runner raytracing_extended_448x320/ raytracing_extended
+    ./vulkan_rt_runner RayTracingInVulkan-Scene5-448x320-Baseline RayTracingInVulkan-Scene5
+    ./vulkan_rt_runner RayTracingInVulkan-Scene6-448x320-Baseline RayTracingInVulkan-Scene6
