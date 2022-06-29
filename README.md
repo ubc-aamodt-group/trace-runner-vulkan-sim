@@ -20,6 +20,7 @@ Afterwards, run the following to build:
 
     meson --prefix="${PWD}/lib" build/
     meson configure build/ -Dbuildtype=debug -D b_lundef=false
+    ninja -C build/ install
 
 Clone and Build gpgpusim_emerald in vulkan-sim/
 
