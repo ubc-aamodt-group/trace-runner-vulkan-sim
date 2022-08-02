@@ -43,6 +43,18 @@
 // #include "vulkan/gpgpusim_calls_from_mesa.h"
 #include "../mesa/src/compiler/shader_enums.h"
 
+#include "../gpgpu-sim_emerald/libcuda/gpgpu_context.h"
+#include "../gpgpu-sim_emerald/libcuda/cuda_api_object.h"
+#include "../gpgpu-sim_emerald/src/gpgpu-sim/gpu-sim.h"
+#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_loader.h"
+#include "../gpgpu-sim_emerald/src/cuda-sim/cuda-sim.h"
+#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_ir.h"
+#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_parser.h"
+#include "../gpgpu-sim_emerald/src/gpgpusim_entrypoint.h"
+#include "../gpgpu-sim_emerald/src/stream_manager.h"
+#include "../gpgpu-sim_emerald/src/abstract_hardware_model.h"
+
+
 #include<glm/glm.hpp>
 
 #define BOOST_FILESYSTEM_VERSION 3
@@ -66,8 +78,9 @@ extern void gpgpusim_vkCmdTraceRaysKHR_cpp(
 
 // extern void gpgpusim_setDescriptorSet_cpp(uint32_t setID, uint32_t descID, void *address, uint32_t size, VkDescriptorType type);
 //extern void gpgpusim_setDescriptorSet_cpp(void *set);
-extern void gpgpusim_setDescriptorSetFromLauncher_cpp(void *address, uint32_t setID, uint32_t descID);
+extern void gpgpusim_setDescriptorSetFromLauncher_cpp(void *address, void *deviceAddress, uint32_t setID, uint32_t descID);
 extern void gpgpusim_setStorageImageFromLauncher_cpp(void *address, 
+                                                    void *deviceAddress, 
                                                     uint32_t setID, 
                                                     uint32_t descID, 
                                                     uint32_t width,
@@ -80,6 +93,7 @@ extern void gpgpusim_setStorageImageFromLauncher_cpp(void *address,
                                                     uint32_t isl_tiling_mode, 
                                                     uint32_t row_pitch_B);
 extern void gpgpusim_setTextureFromLauncher_cpp(void *address, 
+                                                void *deviceAddress, 
                                                 uint32_t setID, 
                                                 uint32_t descID, 
                                                 uint64_t size,
@@ -97,7 +111,74 @@ extern void gpgpusim_setTextureFromLauncher_cpp(void *address,
 
 namespace fs = boost::filesystem;
 
+cudaError_t gpgpusim_malloc(void **devPtr, size_t size, gpgpu_context *gpgpu_ctx = NULL)
+{
+    gpgpu_context *ctx;
+    if (gpgpu_ctx) {
+        ctx = gpgpu_ctx;
+    } else {
+        ctx = GPGPU_Context();
+    }
+    CUctx_st *context = GPGPUSim_Context(ctx);
+    *devPtr = context->get_device()->get_gpgpu()->gpu_malloc(size);
+    if (g_debug_execution >= 3) {
+        printf("GPGPU-Sim PTX: cudaMallocing %zu bytes starting at 0x%llx..\n",
+                size, (unsigned long long)*devPtr);
+        ctx->api->g_mallocPtr_Size[(unsigned long long)*devPtr] = size;
+    }
+    if (*devPtr) {
+        return cudaSuccess;
+    } else {
+        return cudaErrorMemoryAllocation;
+    }
+}
 
+cudaError_t gpgpusim_memcpy(void *dst, const void *src, size_t count,
+                   enum cudaMemcpyKind kind, gpgpu_context *gpgpu_ctx = NULL) {
+  gpgpu_context *ctx;
+  if (gpgpu_ctx) {
+    ctx = gpgpu_ctx;
+  } else {
+    ctx = GPGPU_Context();
+  }
+  // CUctx_st *context = GPGPUSim_Context();
+  // gpgpu_t *gpu = context->get_device()->get_gpgpu();
+  if (g_debug_execution >= 3)
+    printf("GPGPU-Sim PTX: cudaMemcpy(): devPtr = %p\n", dst);
+  if (kind == cudaMemcpyHostToDevice)
+    ctx->the_gpgpusim->g_stream_manager->push(
+        stream_operation(src, (size_t)dst, count, 0));
+  else if (kind == cudaMemcpyDeviceToHost)
+    ctx->the_gpgpusim->g_stream_manager->push(
+        stream_operation((size_t)src, dst, count, 0));
+  else if (kind == cudaMemcpyDeviceToDevice)
+    ctx->the_gpgpusim->g_stream_manager->push(
+        stream_operation((size_t)src, (size_t)dst, count, 0));
+  else if (kind == cudaMemcpyDefault) {
+    if ((size_t)src >= GLOBAL_HEAP_START) {
+      if ((size_t)dst >= GLOBAL_HEAP_START)
+        ctx->the_gpgpusim->g_stream_manager->push(stream_operation(
+            (size_t)src, (size_t)dst, count, 0));  // device to device
+      else
+        ctx->the_gpgpusim->g_stream_manager->push(
+            stream_operation((size_t)src, dst, count, 0));  // device to host
+    } else {
+      if ((size_t)dst >= GLOBAL_HEAP_START)
+        ctx->the_gpgpusim->g_stream_manager->push(
+            stream_operation(src, (size_t)dst, count, 0));
+      else {
+        printf(
+            "GPGPU-Sim PTX: cudaMemcpy - ERROR : unsupported transfer: host to "
+            "host\n");
+        abort();
+      }
+    }
+  } else {
+    printf("GPGPU-Sim PTX: cudaMemcpy - ERROR : unsupported cudaMemcpyKind\n");
+    abort();
+  }
+  return cudaSuccess;
+}
 struct shaderInfo
 {
     char shaderPath[200];
@@ -110,7 +191,10 @@ struct shaderInfo
     }
 };
 
-void* descriptorSets[1][10] = {nullptr};
+#define MAX_DESCRIPTOR_SETS 1
+#define MAX_DESCRIPTOR_SET_BINDINGS 32
+void* descriptorSets[MAX_DESCRIPTOR_SETS][MAX_DESCRIPTOR_SET_BINDINGS] = {nullptr}; // host side
+void* deviceDescriptorSets[MAX_DESCRIPTOR_SETS][MAX_DESCRIPTOR_SET_BINDINGS] = {nullptr}; // device side
 
 // ray_tracing_reflection descriptor set data structures
 namespace ray_tracing_reflection
@@ -381,8 +465,10 @@ int main(int argc, char* argv[])
             obj_models[i] = *model;
         }
 
+        void* device_ptr;
+
         descriptorSets[0][3] = (void*) obj_models;
-        gpgpusim_setDescriptorSetFromLauncher_cpp((void*) obj_models, 0, 3);
+        gpgpusim_setDescriptorSetFromLauncher_cpp((void*) obj_models, device_ptr, 0, 3);
     }
 
 
@@ -425,9 +511,14 @@ int main(int argc, char* argv[])
                 fread(address, size + backwards_range + forward_range, 1, fp);
                 fclose(fp);
 
+                void* device_ptr;
+                gpgpusim_malloc(&device_ptr, size + backwards_range + forward_range);
+                gpgpusim_memcpy(device_ptr, address, size + backwards_range + forward_range, cudaMemcpyHostToDevice);
+                deviceDescriptorSets[setID][descID] = device_ptr + (uint64_t)backwards_range;
+
                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address + (uint64_t)desired_range, size, type);
                 descriptorSets[setID][descID] = address + (uint64_t)backwards_range;
-                gpgpusim_setDescriptorSetFromLauncher_cpp(address + (uint64_t)backwards_range, setID, descID);
+                gpgpusim_setDescriptorSetFromLauncher_cpp(address + (uint64_t)backwards_range, device_ptr + (uint64_t)backwards_range, setID, descID); // change second address back to device_ptr
             }
             else if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
             {
@@ -453,9 +544,14 @@ int main(int argc, char* argv[])
                 fread(address, size, 1, fp);
                 fclose(fp);
 
+                void* device_ptr;
+                gpgpusim_malloc(&device_ptr, size);
+                gpgpusim_memcpy(device_ptr, address, size, cudaMemcpyHostToDevice);
+                deviceDescriptorSets[setID][descID] = device_ptr;
+
                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
                 descriptorSets[setID][descID] = address;
-                gpgpusim_setDescriptorSetFromLauncher_cpp(address, setID, descID);
+                gpgpusim_setDescriptorSetFromLauncher_cpp(address, device_ptr, setID, descID);
             }
         }
     }
@@ -536,9 +632,14 @@ int main(int argc, char* argv[])
                 fread(address - max_backwards + min_forwards, max_forwards - min_forwards + front_buffer_amount, 1, fp);
                 fclose(fp);
             }
+
+            void* device_ptr;
+            gpgpusim_malloc(&device_ptr, max_forwards + front_buffer_amount - max_backwards);
+            gpgpusim_memcpy(device_ptr, address, max_forwards + front_buffer_amount - max_backwards, cudaMemcpyHostToDevice);
+            deviceDescriptorSets[setID][descID] = device_ptr - max_backwards;
             
             descriptorSets[setID][descID] = address - max_backwards;
-            gpgpusim_setDescriptorSetFromLauncher_cpp(address - max_backwards, setID, descID);
+            gpgpusim_setDescriptorSetFromLauncher_cpp(address - max_backwards, device_ptr - max_backwards, setID, descID); // change second address back to device_ptr
         }
     }
 
@@ -583,8 +684,14 @@ int main(int argc, char* argv[])
             void *address;
             address = malloc(width * height * sizeof(long long));
 
+            void* device_ptr;
+            gpgpusim_malloc(&device_ptr, width * height * sizeof(long long));
+            gpgpusim_memcpy(device_ptr, address, width * height * sizeof(long long), cudaMemcpyHostToDevice);
+            deviceDescriptorSets[setID][descID] = device_ptr;
             descriptorSets[setID][descID] = address; // kinda like a descriptor set
+
             gpgpusim_setStorageImageFromLauncher_cpp(address, 
+                                                    device_ptr, 
                                                     setID, 
                                                     descID, 
                                                     width, 
@@ -650,7 +757,14 @@ int main(int argc, char* argv[])
             fread(address, size, 1, fp);
             fclose(fp);
 
+            void* device_ptr;
+            gpgpusim_malloc(&device_ptr, size);
+            gpgpusim_memcpy(device_ptr, address, size, cudaMemcpyHostToDevice);
+            deviceDescriptorSets[setID][descID] = device_ptr;
+            descriptorSets[setID][descID] = address;
+
             gpgpusim_setTextureFromLauncher_cpp(address, 
+                                                device_ptr, 
                                                 setID, 
                                                 descID, 
                                                 size,
@@ -835,235 +949,3 @@ int main(int argc, char* argv[])
     
     //char* address = mmap((void*)0x555557b6c128, );
 }
-
-// int main(int argc, char* argv[])
-// {
-//     char *filePath;
-//     char *mesa_root = getenv("MESA_ROOT");
-    
-//     // Read command line input for shader location
-//     if (argc > 1) {
-//         filePath = argv[1];
-//     }
-//     // Otherwise set to default
-//     else {
-//         filePath = "gpgpusimShaders/";
-//     }
-
-//     char fullPath[200];
-//     snprintf(fullPath, sizeof(fullPath), "%s%s", mesa_root, filePath);
-
-//     // Register Shaders
-//     std::string fullPathString(fullPath);
-
-//     for (auto &p : fs::recursive_directory_iterator(fullPathString))
-//     {
-//         if (p.path().extension() == ".ptx")
-//         {
-//             std::cout  << "Registering shader: " << p.path().string() << '\n';
-//             char shaderPath[200];
-//             strcpy(shaderPath, p.path().string().c_str());
-//             std::string filename = p.path().filename().string();
-//             std::vector<std::string> chunks = split(filename, '_'); 
-//             std::string shaderTypeString = chunks[2];
-//             //std::cout << shaderTypeString << std::endl; // Shader type string
-
-//             gl_shader_stage shaderType;
-//             if (shaderTypeString == "RAYGEN") {
-//                 shaderType = MESA_SHADER_RAYGEN;
-//             } else if (shaderTypeString == "ANYHIT") {
-//                 shaderType = MESA_SHADER_ANY_HIT;
-//             } else if (shaderTypeString == "CLOSEST") {
-//                 shaderType = MESA_SHADER_CLOSEST_HIT;
-//             } else if (shaderTypeString == "MISS") {
-//                 shaderType = MESA_SHADER_MISS;
-//             } else if (shaderTypeString == "INTERSECTION") {
-//                 shaderType = MESA_SHADER_INTERSECTION;
-//             } else if (shaderTypeString == "CALLABLE") {
-//                 shaderType = MESA_SHADER_CALLABLE;
-//             } else {
-//                 std::cout << "Unknown Shader Type Detected" << std::endl;
-//                 abort();
-//             }
-
-//             gpgpusim_registerShader_cpp(shaderPath, shaderType);
-//         }
-//     }
-
-//     // Allocate memory for descriptor sets (uniform buffers and acceleration structure)
-//     // am i only getting the top level and missing the bottom level? Do i need to rebuild the tree in the launcher?
-//     // I think the old addresses from mesa embedded inside is causing the segfault
-//     for (auto &p : fs::recursive_directory_iterator(fullPathString))
-//     {
-//         if (p.path().extension() == ".vkdescrptorsetdata")
-//         {
-//             std::cout << "Loading descriptor set data: " << p.path().string() << '\n';
-//             char descriptorFilePath[200];
-//             strcpy(descriptorFilePath, p.path().string().c_str());
-            
-//             // Parse vkdescrptorsetdata File name format: setID_descID_SizeInBytes_VkDescriptorType.vkdescrptorsetdata
-//             std::string filename = p.path().filename().string();
-//             std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
-//             std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
-
-//             // for (auto s : chunks)
-//             // {
-//             //     std::cout << s << std::endl;
-//             // }
-
-//             uint32_t setID = std::stoi(chunks[0]);
-//             uint32_t descID = std::stoi(chunks[1]);
-//             void *address;
-//             uint32_t size = std::stoi(chunks[2]);
-//             VkDescriptorType type = intToVkDescriptorType(std::stoi(chunks[3]));
-
-//             uint32_t desired_range;
-//             if (type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR || type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV)
-//             {
-//                 desired_range = std::stoi(chunks[4]);
-//                 address = malloc(size + desired_range); // If something breaks, its definitely here
-
-//                 FILE *fp;
-//                 fp = fopen(descriptorFilePath, "r");
-//                 fread(address, size + desired_range, 1, fp);
-//                 fclose(fp);
-
-//                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address + (uint64_t)desired_range, size, type);
-//             }
-//             else if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-//             {
-//                 address = malloc(size+ 1920*1080*sizeof(long long)); // If something breaks, its definitely here
-
-//                 FILE *fp;
-//                 fp = fopen(descriptorFilePath, "r");
-//                 fread(address, size, 1, fp);
-//                 fclose(fp);
-
-//                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
-//             }
-//             else 
-//             {
-//                 address = malloc(size); // If something breaks, its definitely here
-
-//                 FILE *fp;
-//                 fp = fopen(descriptorFilePath, "r");
-//                 fread(address, size, 1, fp);
-//                 fclose(fp);
-
-//                 //gpgpusim_setDescriptorSet_cpp(setID, descID, address, size, type);
-//             }
-//         }
-//     }
-
-//     // Load in Shader Binding Tables
-//     void *raygen_sbt;
-//     void *miss_sbt;
-//     void *hit_sbt;
-//     void *callable_sbt;
-
-//     for (auto &p : fs::recursive_directory_iterator(fullPathString))
-//     {
-//         if (p.path().extension() == ".raygensbt")
-//         {
-//             std::cout  << "Loading raygen sbt: " << p.path().string() << '\n';
-//             char sbtFilePath[200];
-//             strcpy(sbtFilePath, p.path().string().c_str());
-
-//             int sbt_size = 32; // Capped at 32 bytes, dunno if correct
-//             raygen_sbt = malloc(sbt_size); 
-//             FILE *fp;
-//             fp = fopen(sbtFilePath, "r");
-//             fread(raygen_sbt, sbt_size, 1, fp);
-//             fclose(fp);
-//         } 
-//         else if (p.path().extension() == ".misssbt")
-//         {
-//             std::cout  << "Loading miss sbt: " << p.path().string() << '\n';
-//             char sbtFilePath[200];
-//             strcpy(sbtFilePath, p.path().string().c_str());
-
-//             int sbt_size = 32; // Capped at 32 bytes, dunno if correct
-//             miss_sbt = malloc(sbt_size); 
-//             FILE *fp;
-//             fp = fopen(sbtFilePath, "r");
-//             fread(miss_sbt, sbt_size, 1, fp);
-//             fclose(fp);
-//         }
-//         else if (p.path().extension() == ".hitsbt")
-//         {
-//             std::cout  << "Loading hit sbt: " << p.path().string() << '\n';
-//             char sbtFilePath[200];
-//             strcpy(sbtFilePath, p.path().string().c_str());
-
-//             int sbt_size = 32; // Capped at 32 bytes, dunno if correct
-//             hit_sbt = malloc(sbt_size); 
-//             FILE *fp;
-//             fp = fopen(sbtFilePath, "r");
-//             fread(hit_sbt, sbt_size, 1, fp);
-//             fclose(fp);
-//         }
-//         else if (p.path().extension() == ".callablesbt")
-//         {
-//             std::cout  << "Loading callable sbt: " << p.path().string() << '\n';
-//             char sbtFilePath[200];
-//             strcpy(sbtFilePath, p.path().string().c_str());
-
-//             int sbt_size = 32; // Capped at 32 bytes, dunno if correct
-//             callable_sbt = malloc(sbt_size); 
-//             FILE *fp;
-//             fp = fopen(sbtFilePath, "r");
-//             fread(callable_sbt, sbt_size, 1, fp);
-//             fclose(fp);
-//         }
-//     }
-
-//     // Parse vkCmdTraceRaysKHR call parameters
-//     bool is_indirect;
-//     uint32_t launch_width;
-//     uint32_t launch_height;
-//     uint32_t launch_depth;
-//     uint64_t launch_size_addr;
-
-//     for (auto &p : fs::recursive_directory_iterator(fullPathString))
-//     {
-//         if (p.path().extension() == ".callparams")
-//         {
-//             std::cout  << "Loading vkCmdTraceRaysKHR call parameters: " << p.path().string() << '\n';
-//             char callparamsFilePath[200];
-//             strcpy(callparamsFilePath, p.path().string().c_str());
-
-//             FILE *fp;
-//             fp = fopen(callparamsFilePath, "r");
-            
-//             char* line = NULL;
-//             size_t len = 0;
-//             getline(&line, &len, fp); // only 1 line in the callparams file
-//             //printf("%s\n", line);
-//             fclose(fp);
-            
-//             std::string line_string(line);
-//             std::vector<std::string> params = split(line_string, ',');
-
-//             is_indirect = (bool) std::stoi(params[0]);
-//             launch_width = (uint32_t) std::stoi(params[1]);
-//             launch_height = (uint32_t) std::stoi(params[2]);
-//             launch_depth = (uint32_t) std::stoi(params[3]);
-//             launch_size_addr = (uint64_t) std::stoi(params[4]);
-//         }
-//     }
-
-//     // Invoke vkCmdTraceRaysKHR
-//     gpgpusim_vkCmdTraceRaysKHR_cpp(raygen_sbt,
-//                                    miss_sbt,
-//                                    hit_sbt,
-//                                    callable_sbt,
-//                                    is_indirect,
-//                                    launch_width,
-//                                    launch_height,
-//                                    launch_depth,
-//                                    launch_size_addr);
-
-//     // Free the descriptor sets
-
-//     // TODO: Figure out how to dump data separately for each kernel call
-// }
