@@ -141,20 +141,15 @@ cudaError_t gpgpusim_memcpy(void *dst, const void *src, size_t count,
   } else {
     ctx = GPGPU_Context();
   }
-  // CUctx_st *context = GPGPUSim_Context();
-  // gpgpu_t *gpu = context->get_device()->get_gpgpu();
-  if (g_debug_execution >= 3)
-    printf("GPGPU-Sim PTX: cudaMemcpy(): devPtr = %p\n", dst);
+
   if (kind == cudaMemcpyHostToDevice)
-    ctx->the_gpgpusim->g_stream_manager->push(
-        stream_operation(src, (size_t)dst, count, 0));
+    ctx->the_gpgpusim->g_the_gpu->memcpy_to_gpu(dst, src, count);
   else if (kind == cudaMemcpyDeviceToHost)
-    ctx->the_gpgpusim->g_stream_manager->push(
-        stream_operation((size_t)src, dst, count, 0));
+    assert(0);
   else if (kind == cudaMemcpyDeviceToDevice)
-    ctx->the_gpgpusim->g_stream_manager->push(
-        stream_operation((size_t)src, (size_t)dst, count, 0));
+    assert(0);
   else if (kind == cudaMemcpyDefault) {
+    assert(0);
     if ((size_t)src >= GLOBAL_HEAP_START) {
       if ((size_t)dst >= GLOBAL_HEAP_START)
         ctx->the_gpgpusim->g_stream_manager->push(stream_operation(
