@@ -129,6 +129,7 @@ cudaError_t gpgpusim_malloc(void **devPtr, size_t size, gpgpu_context *gpgpu_ctx
     if (*devPtr) {
         return cudaSuccess;
     } else {
+        assert(0);
         return cudaErrorMemoryAllocation;
     }
 }
@@ -147,7 +148,7 @@ cudaError_t gpgpusim_memcpy(void *dst, const void *src, size_t count,
   else if (kind == cudaMemcpyDeviceToHost)
     assert(0);
   else if (kind == cudaMemcpyDeviceToDevice)
-    assert(0);
+    ctx->the_gpgpusim->g_the_gpu->memcpy_gpu_to_gpu(dst, src, count);
   else if (kind == cudaMemcpyDefault) {
     assert(0);
     if ((size_t)src >= GLOBAL_HEAP_START) {
@@ -387,10 +388,15 @@ int main(int argc, char* argv[])
         char descPath[1000];
         //auto obj_models = new std::vector<ray_tracing_reflection::ObjModelGpu>;
         ray_tracing_reflection::ObjModelGpu* obj_models = new ray_tracing_reflection::ObjModelGpu[3];
+        void* obj_models_dev;
+        gpgpusim_malloc(&obj_models_dev, sizeof(ray_tracing_reflection::ObjModelGpu) * 3);
+        std::vector<void*> dev_ptrs; // its 12 void* that goes in obj_models_dev
 
         // scene_desc (setID = 0, binding = 3)
         for (int i = 0; i < 3; i++){
             auto model = new ray_tracing_reflection::ObjModelGpu;
+            void* model_dev;
+            //gpgpusim_malloc(&model_dev, sizeof(ray_tracing_reflection::ObjModelGpu));
             char* line;
             size_t len;
             std::string line_string;
@@ -431,6 +437,11 @@ int main(int argc, char* argv[])
             model->vertex_buffer = malloc(vertex_buffer_size);
             fread(model->vertex_buffer, vertex_buffer_size / sizeof(ray_tracing_reflection::ObjVertex), sizeof(ray_tracing_reflection::ObjVertex), fp);
             fclose(fp);
+            void* vertex_buffer_dev;
+            gpgpusim_malloc(&vertex_buffer_dev, vertex_buffer_size);
+            gpgpusim_memcpy(vertex_buffer_dev, model->vertex_buffer, vertex_buffer_size, cudaMemcpyHostToDevice);
+            //gpgpusim_memcpy(model_dev + 0 * sizeof(void*), &vertex_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
+            dev_ptrs.push_back(vertex_buffer_dev);
 
             // model.index_buffer data
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.index_buffer", fullPath, i);
@@ -439,6 +450,11 @@ int main(int argc, char* argv[])
             model->index_buffer = malloc(index_buffer_size);
             fread(model->index_buffer, index_buffer_size / sizeof(uint32_t), sizeof(uint32_t), fp);
             fclose(fp);
+            void* index_buffer_dev;
+            gpgpusim_malloc(&index_buffer_dev, index_buffer_size);
+            gpgpusim_memcpy(index_buffer_dev, model->index_buffer, index_buffer_size, cudaMemcpyHostToDevice);
+            //gpgpusim_memcpy(model_dev + 1 * sizeof(void*), &index_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
+            dev_ptrs.push_back(index_buffer_dev);
 
             // model.mat_index_buffer
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.mat_index_buffer", fullPath, i);
@@ -447,6 +463,11 @@ int main(int argc, char* argv[])
             model->mat_index_buffer = malloc(mat_index_buffer_size);
             fread(model->mat_index_buffer, mat_index_buffer_size / sizeof(int32_t), sizeof(int32_t), fp);
             fclose(fp);
+            void* mat_index_buffer_dev;
+            gpgpusim_malloc(&mat_index_buffer_dev, mat_index_buffer_size);
+            gpgpusim_memcpy(mat_index_buffer_dev, model->mat_index_buffer, mat_index_buffer_size, cudaMemcpyHostToDevice);
+            //gpgpusim_memcpy(model_dev + 2 * sizeof(void*), &mat_index_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
+            dev_ptrs.push_back(mat_index_buffer_dev);
 
             // model.mat_color_buffer
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.mat_color_buffer", fullPath, i);
@@ -455,15 +476,25 @@ int main(int argc, char* argv[])
             model->mat_color_buffer = malloc(mat_buffer_size);
             fread(model->mat_color_buffer, mat_buffer_size / sizeof(ray_tracing_reflection::ObjMaterial), sizeof(ray_tracing_reflection::ObjMaterial), fp);
             fclose(fp);
+            void* mat_color_buffer_dev;
+            gpgpusim_malloc(&mat_color_buffer_dev, mat_buffer_size);
+            gpgpusim_memcpy(mat_color_buffer_dev, model->mat_color_buffer, mat_buffer_size, cudaMemcpyHostToDevice);
+            //gpgpusim_memcpy(model_dev + 3 * sizeof(void*), &mat_color_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
+            dev_ptrs.push_back(mat_color_buffer_dev);
 
             //obj_models->push_back(*model);
             obj_models[i] = *model;
+            //gpgpusim_memcpy(obj_models_dev + i * sizeof(ray_tracing_reflection::ObjModelGpu), model_dev, sizeof(ray_tracing_reflection::ObjModelGpu), cudaMemcpyDeviceToDevice);
         }
 
-        void* device_ptr;
-
+        // for (int i = 0; i < dev_ptrs.size(); i++)
+        // {
+            gpgpusim_memcpy(obj_models_dev, dev_ptrs.data(), sizeof(void*) * dev_ptrs.size(), cudaMemcpyHostToDevice);
+        // }
+        
         descriptorSets[0][3] = (void*) obj_models;
-        gpgpusim_setDescriptorSetFromLauncher_cpp((void*) obj_models, device_ptr, 0, 3);
+        deviceDescriptorSets[0][3] = obj_models_dev;
+        gpgpusim_setDescriptorSetFromLauncher_cpp((void*) obj_models, obj_models_dev, 0, 3);
     }
 
 
