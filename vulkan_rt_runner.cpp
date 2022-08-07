@@ -456,19 +456,6 @@ int main(int argc, char* argv[])
             //gpgpusim_memcpy(model_dev + 1 * sizeof(void*), &index_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
             dev_ptrs.push_back(index_buffer_dev);
 
-            // model.mat_index_buffer
-            snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.mat_index_buffer", fullPath, i);
-            fp = fopen(descPath, "r");
-            assert(mat_index_buffer_size != 0);
-            model->mat_index_buffer = malloc(mat_index_buffer_size);
-            fread(model->mat_index_buffer, mat_index_buffer_size / sizeof(int32_t), sizeof(int32_t), fp);
-            fclose(fp);
-            void* mat_index_buffer_dev;
-            gpgpusim_malloc(&mat_index_buffer_dev, mat_index_buffer_size);
-            gpgpusim_memcpy(mat_index_buffer_dev, model->mat_index_buffer, mat_index_buffer_size, cudaMemcpyHostToDevice);
-            //gpgpusim_memcpy(model_dev + 2 * sizeof(void*), &mat_index_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
-            dev_ptrs.push_back(mat_index_buffer_dev);
-
             // model.mat_color_buffer
             snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.mat_color_buffer", fullPath, i);
             fp = fopen(descPath, "r");
@@ -481,6 +468,19 @@ int main(int argc, char* argv[])
             gpgpusim_memcpy(mat_color_buffer_dev, model->mat_color_buffer, mat_buffer_size, cudaMemcpyHostToDevice);
             //gpgpusim_memcpy(model_dev + 3 * sizeof(void*), &mat_color_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
             dev_ptrs.push_back(mat_color_buffer_dev);
+
+            // model.mat_index_buffer
+            snprintf(descPath, sizeof(descPath), "%s%d.scene_desc.mat_index_buffer", fullPath, i);
+            fp = fopen(descPath, "r");
+            assert(mat_index_buffer_size != 0);
+            model->mat_index_buffer = malloc(mat_index_buffer_size);
+            fread(model->mat_index_buffer, mat_index_buffer_size / sizeof(int32_t), sizeof(int32_t), fp);
+            fclose(fp);
+            void* mat_index_buffer_dev;
+            gpgpusim_malloc(&mat_index_buffer_dev, mat_index_buffer_size);
+            gpgpusim_memcpy(mat_index_buffer_dev, model->mat_index_buffer, mat_index_buffer_size, cudaMemcpyHostToDevice);
+            //gpgpusim_memcpy(model_dev + 2 * sizeof(void*), &mat_index_buffer_dev, sizeof(void*), cudaMemcpyHostToDevice);
+            dev_ptrs.push_back(mat_index_buffer_dev);
 
             //obj_models->push_back(*model);
             obj_models[i] = *model;
