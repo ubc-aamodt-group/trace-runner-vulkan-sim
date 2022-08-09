@@ -498,17 +498,23 @@ int main(int argc, char* argv[])
     }
 
 
+    // Sort list of files in directory for deterministic result
+    std::vector<fs::path> files_in_directory;
+    std::copy(fs::recursive_directory_iterator(fullPathString), fs::recursive_directory_iterator(), std::back_inserter(files_in_directory));
+    std::sort(files_in_directory.begin(), files_in_directory.end());
+
+
     // Allocate memory for descriptor sets (uniform buffers and acceleration structure)
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".vkdescrptorsetdata")
+        if (p.extension() == ".vkdescrptorsetdata")
         {
-            std::cout << "Loading descriptor set data: " << p.path().string() << '\n';
+            std::cout << "Loading descriptor set data: " << p.string() << '\n';
             char descriptorFilePath[200];
-            strcpy(descriptorFilePath, p.path().string().c_str());
+            strcpy(descriptorFilePath, p.string().c_str());
             
             // Parse vkdescrptorsetdata File name format: setID_descID_SizeInBytes_VkDescriptorType.vkdescrptorsetdata
-            std::string filename = p.path().filename().string();
+            std::string filename = p.filename().string();
             std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
             std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
 
@@ -584,16 +590,16 @@ int main(int argc, char* argv[])
 
 
     // Acceleration Structure
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".asmetadata")
+        if (p.extension() == ".asmetadata")
         {
-            std::cout << "Loading AS metadata: " << p.path().string() << '\n';
+            std::cout << "Loading AS metadata: " << p.string() << '\n';
             char asMetadataFilePath[200];
-            strcpy(asMetadataFilePath, p.path().string().c_str());
+            strcpy(asMetadataFilePath, p.string().c_str());
             
             // Parse vkdescrptorsetdata File name format: setID_descID_SizeInBytes_VkDescriptorType.vkdescrptorsetdata
-            std::string filename = p.path().filename().string();
+            std::string filename = p.filename().string();
             std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
             std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
 
@@ -671,15 +677,15 @@ int main(int argc, char* argv[])
 
 
     // Storage Images
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".vkstorageimagemetadata")
+        if (p.extension() == ".vkstorageimagemetadata")
         {
-            std::cout  << "Loading Storage Image metadata: " << p.path().string() << '\n';
+            std::cout  << "Loading Storage Image metadata: " << p.string() << '\n';
             char storageImageFilePath[200];
-            strcpy(storageImageFilePath, p.path().string().c_str());
+            strcpy(storageImageFilePath, p.string().c_str());
             
-            std::string filename = p.path().filename().string();
+            std::string filename = p.filename().string();
             std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
             std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
 
@@ -734,15 +740,15 @@ int main(int argc, char* argv[])
 
 
     // Texture Data and Metadata
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".vktexturemetadata")
+        if (p.extension() == ".vktexturemetadata")
         {
-            std::cout  << "Loading Texture metadata: " << p.path().string() << '\n';
+            std::cout  << "Loading Texture metadata: " << p.string() << '\n';
             char textureMetadataFilePath[200];
-            strcpy(textureMetadataFilePath, p.path().string().c_str());
+            strcpy(textureMetadataFilePath, p.string().c_str());
             
-            std::string filename = p.path().filename().string();
+            std::string filename = p.filename().string();
             std::vector<std::string> temp = split(filename, '.'); // gets filename without extension
             std::vector<std::string> chunks = split(temp[0], '_'); // splits up the file name into above format
 
@@ -811,14 +817,14 @@ int main(int argc, char* argv[])
     // Register Shaders
     std::vector<shaderInfo> shaders;
 
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".ptx")
+        if (p.extension() == ".ptx")
         {
-            std::cout  << "Registering shader: " << p.path().string() << '\n';
+            std::cout  << "Registering shader: " << p.string() << '\n';
             char shaderPath[200];
-            strcpy(shaderPath, p.path().string().c_str());
-            std::string filename = p.path().filename().string();
+            strcpy(shaderPath, p.string().c_str());
+            std::string filename = p.filename().string();
             std::vector<std::string> chunks = split(filename, '_'); 
             std::string shaderTypeString = chunks[2];
             int shaderID = std::stoi(split(chunks.back(), '.')[0]);
@@ -866,14 +872,14 @@ int main(int argc, char* argv[])
     void *hit_sbt;
     void *callable_sbt;
 
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
         long sbt_size = 64;
-        if (p.path().extension() == ".raygensbt")
+        if (p.extension() == ".raygensbt")
         {
-            std::cout  << "Loading raygen sbt: " << p.path().string() << '\n';
+            std::cout  << "Loading raygen sbt: " << p.string() << '\n';
             char sbtFilePath[200];
-            strcpy(sbtFilePath, p.path().string().c_str());
+            strcpy(sbtFilePath, p.string().c_str());
 
             sbt_size = fseek_filesize(sbtFilePath);
             raygen_sbt = malloc(sbt_size); 
@@ -882,11 +888,11 @@ int main(int argc, char* argv[])
             fread(raygen_sbt, sbt_size, 1, fp);
             fclose(fp);
         } 
-        else if (p.path().extension() == ".misssbt")
+        else if (p.extension() == ".misssbt")
         {
-            std::cout  << "Loading miss sbt: " << p.path().string() << '\n';
+            std::cout  << "Loading miss sbt: " << p.string() << '\n';
             char sbtFilePath[200];
-            strcpy(sbtFilePath, p.path().string().c_str());
+            strcpy(sbtFilePath, p.string().c_str());
 
             sbt_size = fseek_filesize(sbtFilePath);
             miss_sbt = malloc(sbt_size); 
@@ -895,11 +901,11 @@ int main(int argc, char* argv[])
             fread(miss_sbt, sbt_size, 1, fp);
             fclose(fp);
         }
-        else if (p.path().extension() == ".hitsbt")
+        else if (p.extension() == ".hitsbt")
         {
-            std::cout  << "Loading hit sbt: " << p.path().string() << '\n';
+            std::cout  << "Loading hit sbt: " << p.string() << '\n';
             char sbtFilePath[200];
-            strcpy(sbtFilePath, p.path().string().c_str());
+            strcpy(sbtFilePath, p.string().c_str());
 
             sbt_size = fseek_filesize(sbtFilePath);
             hit_sbt = malloc(sbt_size); 
@@ -908,11 +914,11 @@ int main(int argc, char* argv[])
             fread(hit_sbt, sbt_size, 1, fp);
             fclose(fp);
         }
-        else if (p.path().extension() == ".callablesbt")
+        else if (p.extension() == ".callablesbt")
         {
-            std::cout  << "Loading callable sbt: " << p.path().string() << '\n';
+            std::cout  << "Loading callable sbt: " << p.string() << '\n';
             char sbtFilePath[200];
-            strcpy(sbtFilePath, p.path().string().c_str());
+            strcpy(sbtFilePath, p.string().c_str());
 
             sbt_size = fseek_filesize(sbtFilePath);
             callable_sbt = malloc(sbt_size); 
@@ -930,13 +936,13 @@ int main(int argc, char* argv[])
     uint32_t launch_depth;
     uint64_t launch_size_addr;
 
-    for (auto &p : fs::recursive_directory_iterator(fullPathString))
+    for (auto &p : files_in_directory)
     {
-        if (p.path().extension() == ".callparams")
+        if (p.extension() == ".callparams")
         {
-            std::cout  << "Loading vkCmdTraceRaysKHR call parameters: " << p.path().string() << '\n';
+            std::cout  << "Loading vkCmdTraceRaysKHR call parameters: " << p.string() << '\n';
             char callparamsFilePath[200];
-            strcpy(callparamsFilePath, p.path().string().c_str());
+            strcpy(callparamsFilePath, p.string().c_str());
 
             FILE *fp;
             fp = fopen(callparamsFilePath, "r");
