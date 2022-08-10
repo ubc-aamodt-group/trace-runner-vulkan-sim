@@ -39,20 +39,20 @@
 #include <unistd.h>
 #include <algorithm>
 //#include "vulkan/vulkan_core.h"
-#include "../mesa/include/vulkan/vulkan_core.h"
+#include "../mesa-vulkan-sim/include/vulkan/vulkan_core.h"
 // #include "vulkan/gpgpusim_calls_from_mesa.h"
-#include "../mesa/src/compiler/shader_enums.h"
+#include "../mesa-vulkan-sim/src/compiler/shader_enums.h"
 
-#include "../gpgpu-sim_emerald/libcuda/gpgpu_context.h"
-#include "../gpgpu-sim_emerald/libcuda/cuda_api_object.h"
-#include "../gpgpu-sim_emerald/src/gpgpu-sim/gpu-sim.h"
-#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_loader.h"
-#include "../gpgpu-sim_emerald/src/cuda-sim/cuda-sim.h"
-#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_ir.h"
-#include "../gpgpu-sim_emerald/src/cuda-sim/ptx_parser.h"
-#include "../gpgpu-sim_emerald/src/gpgpusim_entrypoint.h"
-#include "../gpgpu-sim_emerald/src/stream_manager.h"
-#include "../gpgpu-sim_emerald/src/abstract_hardware_model.h"
+#include "../vulkan-sim/libcuda/gpgpu_context.h"
+#include "../vulkan-sim/libcuda/cuda_api_object.h"
+#include "../vulkan-sim/src/gpgpu-sim/gpu-sim.h"
+#include "../vulkan-sim/src/cuda-sim/ptx_loader.h"
+#include "../vulkan-sim/src/cuda-sim/cuda-sim.h"
+#include "../vulkan-sim/src/cuda-sim/ptx_ir.h"
+#include "../vulkan-sim/src/cuda-sim/ptx_parser.h"
+#include "../vulkan-sim/src/gpgpusim_entrypoint.h"
+#include "../vulkan-sim/src/stream_manager.h"
+#include "../vulkan-sim/src/abstract_hardware_model.h"
 
 
 #include<glm/glm.hpp>
