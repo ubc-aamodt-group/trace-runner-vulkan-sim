@@ -35,7 +35,7 @@ INCLUDES = -I/usr/include $(VULKAN_PATHS)
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-GPGPUSIM_PATH = ../gpgpu-sim_emerald/lib/gcc-$(CC_VERSION)/cuda-$(CUDART_VERSION)/debug
+GPGPUSIM_PATH = ../vulkan-sim/lib/gcc-$(CC_VERSION)/cuda-$(CUDART_VERSION)/debug
 #GPGPUSIM_PATH = ../gpgpu-sim_emerald/lib/gcc-9.4.0/cuda-10010/debug
 LFLAGS = -L$(GPGPUSIM_PATH)
 
