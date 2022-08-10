@@ -7,7 +7,7 @@
 
 include version_detection.mk
 
-MESA_PATH := ../mesa
+MESA_PATH := ../vulkan-sim-mesa
 VULKAN_PATHS += -I$(MESA_PATH)/src/intel/
 VULKAN_PATHS += -I$(MESA_PATH)/include/
 VULKAN_PATHS += -I$(MESA_PATH)/src/
