@@ -30,7 +30,7 @@ CFLAGS = -fpermissive -g3 -Wall  -Wno-unused-function -Wno-sign-compare $(VULKAN
 #CFLAGS = -Wall -g3 -std=c++0x -Wl,--unresolved-symbols=ignore-in-shared-libs -Wno-unused-function -Wno-sign-compare $(VULKAN_PATHS) -fpermissive -fPIC
 
 # define any directories containing header files other than /usr/include
-INCLUDES = -I/usr/include $(VULKAN_PATHS)
+INCLUDES = -I/usr/include $(VULKAN_PATHS) -I$(CUDA_INSTALL_PATH)/include/
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
